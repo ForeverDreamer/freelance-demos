@@ -1,0 +1,23 @@
+# minimal-rag-chat configuration
+# API keys are read from environment: OPENAI_API_KEY, ANTHROPIC_API_KEY.
+# Use provider: fake to run the demo end-to-end without any API key.
+
+embeddings:
+  provider: openai            # openai | fake
+  model: text-embedding-3-small
+
+llm:
+  provider: openai            # openai | anthropic | fake
+  model: gpt-4o-mini          # anthropic example: claude-haiku-4-5-20251001
+  temperature: 0.0
+  max_tokens: 512
+
+retrieval:
+  top_k: 4
+  chunk_size: 800
+  chunk_overlap: 100
+  # Retrieval fuses BM25 keyword ranks with vector cosine ranks
+  # via Reciprocal Rank Fusion (k = 60).
+
+storage:
+  path: ./vector_store.jsonl

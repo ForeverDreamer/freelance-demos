@@ -1,0 +1,13 @@
+# Python / uv
+.venv/
+__pycache__/
+*.py[co]
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+
+# User-specific config copy
+rag.yaml
+
+# Generated store (re-create via `ragchat.py ingest`)
+vector_store.jsonl

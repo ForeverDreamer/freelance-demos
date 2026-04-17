@@ -1,0 +1,19 @@
+[project]
+name = "minimal-rag-chat"
+version = "0.1.0"
+description = "Capability demo: end-to-end RAG CLI with hybrid BM25 + vector retrieval"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pyyaml>=6.0",
+    "numpy>=1.24",
+    "rank-bm25>=0.2.2",
+    "openai>=1.0",
+    "anthropic>=0.39",
+    "pymupdf4llm>=0.0.27",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]

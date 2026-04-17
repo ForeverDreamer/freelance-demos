@@ -12,6 +12,7 @@ deployments.
 | Demo | One-line | Stack | Status |
 |---|---|---|:---:|
 | [file-organizer](file-organizer/) | Folder watcher with sub-2s detection and YAML rules | Python, watchdog | 🟡 code ready |
+| [minimal-rag-chat](minimal-rag-chat/) | End-to-end RAG CLI with hybrid BM25 + vector retrieval | Python, OpenAI / Anthropic, rank-bm25 | 🟡 code ready |
 
 ## About these demos
 
