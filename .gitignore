@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+venv/
+.venv/
+
+# IDE
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local-only
+.env
+.env.local
