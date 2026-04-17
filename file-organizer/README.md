@@ -16,9 +16,74 @@ on every platform.
 
 See `tests/test_latency.py` for the measurement.
 
+## Prerequisites
+
+This project requires **Python 3.11+** and [uv](https://docs.astral.sh/uv/)
+for dependency management. You do **not** need to install Python
+separately — `uv` will fetch and manage the interpreter for you.
+
+### Windows
+
+Open PowerShell and run:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Then restart the terminal so `uv` is on your `PATH`. Verify with:
+
+```powershell
+uv --version
+```
+
+### macOS
+
+Open Terminal and run either of:
+
+```bash
+# Official installer (recommended)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Or via Homebrew
+brew install uv
+```
+
+Verify with `uv --version`.
+
+## Downloading only this subfolder
+
+The full repo contains several unrelated demos, but you do **not** need
+to install git or clone anything. Just grab the ZIP:
+
+1. Open <https://github.com/ForeverDreamer/freelance-demos> in your browser
+2. Click the green **Code** button, then **Download ZIP**
+3. Unzip the file:
+   - **Windows**: right-click the ZIP → *Extract All…* → pick a folder
+     (e.g. `Desktop\freelance-demos`)
+   - **macOS**: double-click the ZIP in Finder — it extracts next to the ZIP
+4. Open the extracted folder. You only need the `file-organizer/` subfolder
+   — you can delete the rest if you want.
+5. Open a terminal inside `file-organizer/`:
+   - **Windows**: in File Explorer, click the address bar, type `powershell`,
+     and press Enter
+   - **macOS**: right-click the folder in Finder → *New Terminal at Folder*
+     (enable this under *System Settings → Keyboard → Keyboard Shortcuts →
+     Services* if you don't see it)
+
 ## Quick start
 
-This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
+Run these commands from inside the `file-organizer/` folder (the terminal
+you opened in the previous section).
+
+### Windows (PowerShell)
+
+```powershell
+uv sync
+Copy-Item rules.example.yaml rules.yaml
+uv run python organizer.py --config rules.yaml --watch .\sample_data
+```
+
+### macOS (Terminal)
 
 ```bash
 uv sync
@@ -26,7 +91,8 @@ cp rules.example.yaml rules.yaml
 uv run python organizer.py --config rules.yaml --watch ./sample_data
 ```
 
-Drop any file into `./sample_data` and watch the log.
+Then drop any file into the `sample_data` folder and watch the log print
+which rule matched.
 
 ## What this demo shows
 
@@ -78,7 +144,7 @@ Expected: 11 tests pass in under a second, including the sub-2s latency assertio
 @reboot /usr/bin/python3 /path/to/organizer.py --config /path/to/rules.yaml --watch /path/to/folder
 ```
 
-### Windows
+### Windows (Task Scheduler)
 
 Quick hint: run via `pythonw.exe` + Task Scheduler trigger "At startup".
 Full XML import and service-wrap is part of paid delivery.
