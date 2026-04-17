@@ -1,0 +1,107 @@
+"""Tests for action application and error recovery."""
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+
+import pytest
+
+from actions.move import move
+from config import Action, Config, Rule
+from organizer import OrganizerHandler
+
+
+def test_move(tmp_path: Path) -> None:
+    source = tmp_path / "source.txt"
+    source.write_text("hello")
+    target_dir = tmp_path / "destination"
+
+    destination = move(source, target_dir)
+
+    assert destination.exists()
+    assert destination.read_text() == "hello"
+    assert not source.exists()
+    assert destination.parent == target_dir
+
+
+def test_move_collision(tmp_path: Path) -> None:
+    source = tmp_path / "a.txt"
+    source.write_text("first")
+    target_dir = tmp_path / "dst"
+    target_dir.mkdir()
+    (target_dir / "a.txt").write_text("existing")
+
+    destination = move(source, target_dir)
+
+    # Collision resolved with numeric suffix
+    assert destination.name == "a-1.txt"
+    assert destination.read_text() == "first"
+    # Original untouched target is preserved
+    assert (target_dir / "a.txt").read_text() == "existing"
+
+
+def test_match_and_route(tmp_path: Path) -> None:
+    """End-to-end: handler matches a rule and routes the file."""
+    source = tmp_path / "photo.jpg"
+    source.write_text("binary-ish")
+    target_dir = tmp_path / "routed" / "images"
+
+    config = Config(
+        rules=[
+            Rule(
+                name="images",
+                extensions=["jpg"],
+                action=Action(type="move", target=str(target_dir)),
+            )
+        ]
+    )
+    handler = OrganizerHandler(config)
+    handler._process(str(source))
+
+    assert (target_dir / "photo.jpg").exists()
+    assert not source.exists()
+
+
+def test_no_rule_match_does_nothing(tmp_path: Path) -> None:
+    source = tmp_path / "x.unknown"
+    source.write_text("y")
+    config = Config(rules=[])
+    handler = OrganizerHandler(config)
+
+    handler._process(str(source))
+
+    # File untouched
+    assert source.exists()
+
+
+def test_error_recovery(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    """When the action fails, the handler must log and return, not raise."""
+    source = tmp_path / "x.txt"
+    source.write_text("content")
+
+    # Create a regular file at a path that the action will try to use as a
+    # parent directory. mkdir(parents=True) will fail because an intermediate
+    # path component is a file, not a directory.
+    blocker = tmp_path / "blocker"
+    blocker.write_text("i am a file")
+    invalid_target = blocker / "subdir"
+
+    config = Config(
+        rules=[
+            Rule(
+                name="txt",
+                extensions=["txt"],
+                action=Action(type="move", target=str(invalid_target)),
+            )
+        ]
+    )
+    handler = OrganizerHandler(config)
+
+    with caplog.at_level(logging.ERROR, logger="file-organizer"):
+        handler._process(str(source))  # Must not raise
+
+    # Error was logged
+    error_records = [r for r in caplog.records if r.levelno == logging.ERROR]
+    assert error_records, "Expected an ERROR log record from failed action"
+    # Source file should still exist because move did not complete
+    assert source.exists()

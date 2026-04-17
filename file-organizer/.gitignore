@@ -1,0 +1,10 @@
+# Local runtime output
+routed/
+logs/*.log
+
+# User-specific copy of the example rules
+rules.yaml
+
+# Synthetic data users drop in during demo runs
+sample_data/*
+!sample_data/README.md

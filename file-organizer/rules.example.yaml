@@ -1,0 +1,39 @@
+# file-organizer rules
+# Match incoming files by extension, apply the configured action.
+# Paths are resolved relative to the watched directory's current working dir.
+
+rules:
+  - name: images
+    match:
+      extensions: [jpg, jpeg, png, gif, webp, bmp]
+    action:
+      type: move
+      target: ./routed/images
+
+  - name: documents
+    match:
+      extensions: [pdf, docx, doc, txt, md, odt]
+    action:
+      type: move
+      target: ./routed/documents
+
+  - name: archives
+    match:
+      extensions: [zip, tar, gz, 7z, rar]
+    action:
+      type: move
+      target: ./routed/archives
+
+  - name: audio
+    match:
+      extensions: [mp3, wav, flac, ogg, m4a]
+    action:
+      type: move
+      target: ./routed/audio
+
+  - name: video
+    match:
+      extensions: [mp4, mkv, mov, avi, webm]
+    action:
+      type: move
+      target: ./routed/video

@@ -1,0 +1,15 @@
+[project]
+name = "file-organizer"
+version = "0.1.0"
+description = "Capability demo: folder watcher with sub-2s detection and YAML rules"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pyyaml>=6.0.3",
+    "watchdog>=6.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
