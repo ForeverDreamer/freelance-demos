@@ -11,7 +11,7 @@ deployments.
 
 | Demo | One-line | Stack | Status |
 |---|---|---|:---:|
-| [file-organizer](file-organizer/) | Folder watcher with sub-2s detection and YAML rules | Python, watchdog | 🔴 planned |
+| [file-organizer](file-organizer/) | Folder watcher with sub-2s detection and YAML rules | Python, watchdog | 🟡 code ready |
 
 ## About these demos
 
@@ -30,16 +30,18 @@ Each subfolder is self-contained. For example:
 
 ```bash
 cd file-organizer
-pip install -r requirements.txt
-python organizer.py --config rules.example.yaml --watch ./sample_data
+uv sync
+uv run python organizer.py --config rules.example.yaml --watch ./sample_data
 ```
 
-Follow the subfolder README for setup specifics.
+Follow the subfolder README for setup specifics. Python demos in this
+repo use [uv](https://docs.astral.sh/uv/) for dependency management.
 
 ## Repo conventions
 
-- Each demo subfolder has its own `README.md`, `LICENSE`, `requirements.txt`,
-  `tests/`, and runnable entry point
+- Each demo subfolder has its own `README.md`, dependency manifest
+  (`pyproject.toml` for Python demos), `tests/`, and a runnable entry point.
+  Top-level `LICENSE` (MIT) applies unless a subfolder overrides it
 - Demos are independent: no cross-subfolder imports. Shared utilities
   do not belong here (they live in my private component library)
 - Sample data under `sample_data/` is synthetic only. No real client
