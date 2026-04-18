@@ -5,35 +5,49 @@
 rules:
   - name: images
     match:
-      extensions: [jpg, jpeg, png, gif, webp, bmp]
+      extensions: [jpg, jpeg, png, gif, webp, bmp, tiff, heic, svg]
     action:
       type: move
       target: ./routed/images
 
   - name: documents
     match:
-      extensions: [pdf, docx, doc, txt, md, odt]
+      extensions: [pdf, docx, doc, txt, md, odt, rtf, pages]
     action:
       type: move
       target: ./routed/documents
 
   - name: archives
     match:
-      extensions: [zip, tar, gz, 7z, rar]
+      extensions: [zip, tar, gz, tgz, bz2, xz, 7z, rar]
     action:
       type: move
       target: ./routed/archives
 
   - name: audio
     match:
-      extensions: [mp3, wav, flac, ogg, m4a]
+      extensions: [mp3, wav, flac, ogg, m4a, aac, opus]
     action:
       type: move
       target: ./routed/audio
 
   - name: video
     match:
-      extensions: [mp4, mkv, mov, avi, webm]
+      extensions: [mp4, mkv, mov, avi, webm, wmv, m4v]
     action:
       type: move
       target: ./routed/video
+
+  - name: data
+    match:
+      extensions: [csv, tsv, xlsx, xls, json, jsonl, parquet, ods]
+    action:
+      type: move
+      target: ./routed/data
+
+  - name: code
+    match:
+      extensions: [py, js, ts, tsx, jsx, go, rs, java, cpp, c, h, sh, rb]
+    action:
+      type: move
+      target: ./routed/code

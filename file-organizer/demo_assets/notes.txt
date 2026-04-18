@@ -1,0 +1,2 @@
+Sample notes for file-organizer demo.
+Drop this file into sample_data/ and it routes to ./routed/documents/.
