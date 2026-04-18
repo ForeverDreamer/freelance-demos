@@ -115,8 +115,14 @@ delivery adds:
   trash, custom shell hooks
 - **Content-based matching**: regex on filename, file size, mtime,
   MIME type, magic bytes (demo only matches file extensions)
-- **Windows Task Scheduler XML** for silent headless install
-  (cron snippet is in this README, Windows install is paid delivery)
+- **One-click auto-start installer for Windows and macOS** — pre-built
+  Task Scheduler XML + PowerShell registrar on Windows, and a launchd
+  `.plist` + `launchctl bootstrap` script on macOS. Client double-clicks
+  once and the watcher runs headless at boot, skipping the GUI minefield
+  (Windows: startup trigger, run-as account, highest privileges, retry
+  policy; macOS: LaunchAgent vs LaunchDaemon placement, Login Items
+  authorization on macOS 13+, Full Disk Access grants, absolute `uv`
+  path since launchd ignores shell `PATH`)
 - **Structured JSON logging** with rotation and optional external
   sinks (syslog, ELK, CloudWatch)
 - **Dry-run / preview mode** before applying destructive actions
