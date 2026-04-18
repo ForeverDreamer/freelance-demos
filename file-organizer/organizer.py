@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -19,6 +20,31 @@ from actions import move as move_action
 from config import Config, load_config, match_rule
 
 logger = logging.getLogger("file-organizer")
+
+
+def _wait_until_stable(path: str, timeout: float = 2.0, interval: float = 0.1) -> bool:
+    """Poll until `path` is openable and its size is unchanged between checks.
+
+    Windows fires `on_created` before the copying process releases its handle,
+    causing WinError 32 ("used by another process") on shutil.move. Returns
+    True once the file is stable, False if the timeout elapses first.
+    """
+    deadline = time.monotonic() + timeout
+    last_size = -1
+    while time.monotonic() < deadline:
+        try:
+            size = os.path.getsize(path)
+            with open(path, "ab"):
+                pass
+        except OSError:
+            last_size = -1
+            time.sleep(interval)
+            continue
+        if size == last_size:
+            return True
+        last_size = size
+        time.sleep(interval)
+    return False
 
 
 class OrganizerHandler(FileSystemEventHandler):
@@ -42,6 +68,11 @@ class OrganizerHandler(FileSystemEventHandler):
         Any exception is caught and logged; the observer keeps running.
         """
         try:
+            if not _wait_until_stable(src_path):
+                logger.warning(
+                    "[TIMEOUT] %s still locked or growing after 2s", src_path
+                )
+                return
             rule = match_rule(self.config, src_path)
             if rule is None:
                 logger.info("[SKIP] %s (no rule matched)", src_path)

@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 import logging
+import threading
+import time
 from pathlib import Path
 
 import pytest
 
 from actions.move import move
 from config import Action, Config, Rule
-from organizer import OrganizerHandler
+from organizer import OrganizerHandler, _wait_until_stable
 
 
 def test_move(tmp_path: Path) -> None:
@@ -72,6 +74,39 @@ def test_no_rule_match_does_nothing(tmp_path: Path) -> None:
 
     # File untouched
     assert source.exists()
+
+
+def test_wait_until_stable_waits_for_writer_to_finish(tmp_path: Path) -> None:
+    """Simulate the Windows race: a process keeps writing while the watcher
+    reacts. _wait_until_stable must hold off until the writes settle."""
+    path = tmp_path / "growing.bin"
+    path.write_bytes(b"")
+    stop = threading.Event()
+
+    def writer() -> None:
+        while not stop.is_set():
+            with open(path, "ab") as handle:
+                handle.write(b"x")
+            time.sleep(0.05)
+
+    t = threading.Thread(target=writer, daemon=True)
+    t.start()
+    threading.Timer(0.3, stop.set).start()
+
+    try:
+        assert _wait_until_stable(str(path), timeout=2.0, interval=0.1) is True
+        size_after = path.stat().st_size
+        time.sleep(0.15)
+        # File must not have grown after the helper returned stable.
+        assert path.stat().st_size == size_after
+    finally:
+        stop.set()
+        t.join(timeout=1)
+
+
+def test_wait_until_stable_times_out_on_missing_file(tmp_path: Path) -> None:
+    missing = tmp_path / "does-not-exist"
+    assert _wait_until_stable(str(missing), timeout=0.3, interval=0.05) is False
 
 
 def test_error_recovery(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:

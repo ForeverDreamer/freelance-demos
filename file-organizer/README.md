@@ -140,7 +140,7 @@ uv sync
 uv run pytest tests/
 ```
 
-Expected: 11 tests pass in under a second, including the sub-2s latency assertion.
+Expected: 13 tests pass in under 2 seconds, including the sub-2s latency assertion.
 
 ## Scheduling
 
