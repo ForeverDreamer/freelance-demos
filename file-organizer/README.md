@@ -162,4 +162,4 @@ MIT. Fork, read, learn freely.
 ## Custom builds
 
 For your specific project, folder map, rule set, production deployment,
-or ongoing maintenance, reach out on Upwork: `<YOUR_UPWORK_PROFILE_URL>`
+or ongoing maintenance, reach out on Upwork: <https://www.upwork.com/freelancers/~0140562708001afd27>
