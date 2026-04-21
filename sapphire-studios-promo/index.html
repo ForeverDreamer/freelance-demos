@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #0a0e1a;
+        font-family: "Inter", system-ui, sans-serif;
+        color: #f5f5f7;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ---------- Global background glow ---------- */
+      .bg-glow {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse at 50% 40%,
+          rgba(30, 58, 138, 0.35) 0%,
+          rgba(15, 77, 146, 0.12) 35%,
+          transparent 70%
+        );
+        pointer-events: none;
+      }
+
+      /* ---------- Scene common ---------- */
+      .scene {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 120px 80px;
+      }
+
+      /* ---------- Scene 1: minimalist open ---------- */
+      .s1-kicker {
+        font-size: 44px;
+        font-weight: 500;
+        letter-spacing: 0.35em;
+        color: #6b7a99;
+        text-transform: uppercase;
+        margin-bottom: 48px;
+      }
+      .s1-name {
+        font-size: 116px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.05;
+        text-align: center;
+      }
+
+      /* ---------- Scene 2: $450M punch ---------- */
+      .s2-number {
+        font-size: 280px;
+        font-weight: 900;
+        letter-spacing: -0.05em;
+        line-height: 0.95;
+        color: #f5f5f7;
+      }
+      .s2-caption {
+        font-size: 42px;
+        font-weight: 500;
+        color: #6b7a99;
+        text-transform: uppercase;
+        letter-spacing: 0.32em;
+        margin-top: 48px;
+      }
+      .s2-sublabel {
+        font-size: 28px;
+        font-weight: 400;
+        color: #4a5878;
+        text-transform: uppercase;
+        letter-spacing: 0.25em;
+        margin-top: 16px;
+      }
+
+      /* ---------- Scene 3: service matrix ---------- */
+      .s3-word {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 200px;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        line-height: 1;
+        text-align: center;
+      }
+      .s3-word.s3-small {
+        font-size: 140px;
+      }
+
+      /* ---------- Scene 4: Creative Engine pipeline ---------- */
+      .s4-header {
+        font-size: 48px;
+        font-weight: 600;
+        letter-spacing: 0.32em;
+        color: #6b7a99;
+        text-transform: uppercase;
+        margin-bottom: 100px;
+      }
+      .s4-pipeline {
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+        align-items: center;
+      }
+      .s4-stage {
+        font-size: 110px;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        line-height: 1;
+      }
+      .s4-stage.accent {
+        color: #4f7cc9;
+      }
+      .s4-arrow {
+        font-size: 58px;
+        color: #1e3a8a;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      /* ---------- Scene 5: client numbers ---------- */
+      .s5-stat {
+        text-align: center;
+        margin-bottom: 64px;
+      }
+      .s5-stat:last-child {
+        margin-bottom: 0;
+      }
+      .s5-num {
+        font-size: 180px;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        display: block;
+        line-height: 1;
+      }
+      .s5-num.accent {
+        color: #4f7cc9;
+      }
+      .s5-lbl {
+        font-size: 36px;
+        font-weight: 500;
+        color: #6b7a99;
+        text-transform: uppercase;
+        letter-spacing: 0.28em;
+        margin-top: 24px;
+        display: block;
+      }
+
+      /* ---------- Scene 6: tagline finale ---------- */
+      .s6-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .s6-line1 {
+        font-size: 68px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        margin-bottom: 24px;
+        white-space: nowrap;
+      }
+      .s6-line2 {
+        font-size: 68px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        color: #4f7cc9;
+        white-space: nowrap;
+      }
+      .s6-wordmark {
+        position: absolute;
+        bottom: 120px;
+        left: 0;
+        right: 0;
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: 0.45em;
+        text-transform: uppercase;
+        text-align: center;
+        color: #f5f5f7;
+      }
+      .s6-wordmark .dot {
+        color: #4f7cc9;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="20"
+      data-width="1080"
+      data-height="1920"
+    >
+      <!-- Ambient background glow — spans full composition -->
+      <div
+        id="bg-glow"
+        class="clip bg-glow"
+        data-start="0"
+        data-duration="20"
+        data-track-index="0"
+      ></div>
+
+      <!-- Background music — procedurally synthesized 20s ambient drone -->
+      <audio
+        id="bgm"
+        class="clip"
+        data-start="0"
+        data-duration="20"
+        data-track-index="10"
+        src="public/audio/bgm.mp3"
+      ></audio>
+
+      <!-- ========== Scene 1 (0-3s): Minimalist opener ========== -->
+      <div
+        id="scene-1"
+        class="clip scene"
+        data-start="0"
+        data-duration="3"
+        data-track-index="1"
+      >
+        <div class="s1-kicker">Meet</div>
+        <div class="s1-name">Sapphire&nbsp;Studios</div>
+      </div>
+
+      <!-- ========== Scene 2 (3-6s): $450M number punch ========== -->
+      <div
+        id="scene-2"
+        class="clip scene"
+        data-start="3"
+        data-duration="3"
+        data-track-index="1"
+      >
+        <div class="s2-number">$450M+</div>
+        <div class="s2-caption">tracked revenue</div>
+        <div class="s2-sublabel">across 400+ brands</div>
+      </div>
+
+      <!-- ========== Scene 3 (6-10s): Service matrix (5 × 0.8s) ========== -->
+      <div
+        id="s3-ugc"
+        class="clip scene"
+        data-start="6.0"
+        data-duration="0.8"
+        data-track-index="2"
+      >
+        <div class="s3-word">UGC</div>
+      </div>
+      <div
+        id="s3-pgc"
+        class="clip scene"
+        data-start="6.8"
+        data-duration="0.8"
+        data-track-index="3"
+      >
+        <div class="s3-word">PGC</div>
+      </div>
+      <div
+        id="s3-aigc"
+        class="clip scene"
+        data-start="7.6"
+        data-duration="0.8"
+        data-track-index="4"
+      >
+        <div class="s3-word">AIGC</div>
+      </div>
+      <div
+        id="s3-cgi"
+        class="clip scene"
+        data-start="8.4"
+        data-duration="0.8"
+        data-track-index="5"
+      >
+        <div class="s3-word">CGI</div>
+      </div>
+      <div
+        id="s3-anim"
+        class="clip scene"
+        data-start="9.2"
+        data-duration="0.8"
+        data-track-index="6"
+      >
+        <div class="s3-word s3-small">ANIMATIONS</div>
+      </div>
+
+      <!-- ========== Scene 4 (10-14s): Creative Engine pipeline ========== -->
+      <div
+        id="scene-4"
+        class="clip scene"
+        data-start="10"
+        data-duration="4"
+        data-track-index="1"
+      >
+        <div class="s4-header">The Creative Engine</div>
+        <div class="s4-pipeline">
+          <div class="s4-stage" id="s4-data">DATA</div>
+          <div class="s4-arrow" id="s4-arrow-1">&#x2193;</div>
+          <div class="s4-stage accent" id="s4-creative">CREATIVE</div>
+          <div class="s4-arrow" id="s4-arrow-2">&#x2193;</div>
+          <div class="s4-stage" id="s4-converts">CONVERTS</div>
+        </div>
+      </div>
+
+      <!-- ========== Scene 5 (14-17s): Client numbers ========== -->
+      <div
+        id="scene-5"
+        class="clip scene"
+        data-start="14"
+        data-duration="3"
+        data-track-index="1"
+      >
+        <div class="s5-stat" id="s5-stat-1">
+          <span class="s5-num">400+</span>
+          <span class="s5-lbl">brands served</span>
+        </div>
+        <div class="s5-stat" id="s5-stat-2">
+          <span class="s5-num accent">$100M+</span>
+          <span class="s5-lbl">ad revenue 2023&ndash;2024</span>
+        </div>
+      </div>
+
+      <!-- ========== Scene 6 (17-20s): Tagline finale ========== -->
+      <div
+        id="scene-6"
+        class="clip scene"
+        data-start="17"
+        data-duration="3"
+        data-track-index="1"
+      >
+        <div class="s6-inner">
+          <div class="s6-line1">Creative is the media plan.</div>
+          <div class="s6-line2">We make it perform.</div>
+        </div>
+        <div class="s6-wordmark">
+          Sapphire<span class="dot">·</span>Studios
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // ================= Background glow (ambient, 0-20s) =================
+      tl.from("#bg-glow", { opacity: 0, duration: 1.2, ease: "power1.out" }, 0);
+
+      // ================= Scene 1 (0-3s) =================
+      tl.from(
+        "#scene-1 .s1-kicker",
+        { y: 24, opacity: 0, duration: 0.55, ease: "power2.out" },
+        0.15,
+      );
+      tl.from(
+        "#scene-1 .s1-name",
+        { y: 36, opacity: 0, duration: 0.75, ease: "power2.out" },
+        0.35,
+      );
+      tl.to(
+        "#scene-1",
+        { opacity: 0, duration: 0.35, ease: "power2.inOut" },
+        2.65,
+      );
+      tl.set("#scene-1", { opacity: 0 }, 3.0);
+
+      // ================= Scene 2 (3-6s) — $450M punch =================
+      tl.from(
+        "#scene-2 .s2-number",
+        {
+          scale: 0.72,
+          opacity: 0,
+          duration: 0.75,
+          ease: "back.out(1.5)",
+          transformOrigin: "50% 50%",
+        },
+        3,
+      );
+      tl.from(
+        "#scene-2 .s2-caption",
+        { y: 18, opacity: 0, duration: 0.5, ease: "power2.out" },
+        3.35,
+      );
+      tl.from(
+        "#scene-2 .s2-sublabel",
+        { y: 12, opacity: 0, duration: 0.4, ease: "power2.out" },
+        3.55,
+      );
+      tl.to(
+        "#scene-2",
+        { opacity: 0, duration: 0.35, ease: "power2.inOut" },
+        5.65,
+      );
+      tl.set("#scene-2", { opacity: 0 }, 6.0);
+
+      // ================= Scene 3 (6-10s) — service matrix =================
+      const s3Sel = ["#s3-ugc", "#s3-pgc", "#s3-aigc", "#s3-cgi", "#s3-anim"];
+      s3Sel.forEach((sel, i) => {
+        const t = 6 + i * 0.8;
+        tl.from(
+          sel + " .s3-word",
+          {
+            scale: 0.62,
+            opacity: 0,
+            duration: 0.32,
+            ease: "back.out(2)",
+            transformOrigin: "50% 50%",
+          },
+          t,
+        );
+        tl.to(
+          sel + " .s3-word",
+          { scale: 1.04, duration: 0.28, ease: "power1.inOut" },
+          t + 0.32,
+        );
+        tl.to(
+          sel,
+          { opacity: 0, duration: 0.18, ease: "power2.inOut" },
+          t + 0.62,
+        );
+        tl.set(sel, { opacity: 0 }, t + 0.8);
+      });
+
+      // ================= Scene 4 (10-14s) — Creative Engine =================
+      tl.from(
+        "#scene-4 .s4-header",
+        { y: 18, opacity: 0, duration: 0.55, ease: "power2.out" },
+        10,
+      );
+      tl.from(
+        "#s4-data",
+        { y: 28, opacity: 0, duration: 0.45, ease: "power2.out" },
+        10.45,
+      );
+      tl.from(
+        "#s4-arrow-1",
+        { opacity: 0, scaleY: 0.2, duration: 0.35, ease: "power2.out" },
+        10.8,
+      );
+      tl.from(
+        "#s4-creative",
+        { y: 28, opacity: 0, duration: 0.45, ease: "power2.out" },
+        11.05,
+      );
+      tl.from(
+        "#s4-arrow-2",
+        { opacity: 0, scaleY: 0.2, duration: 0.35, ease: "power2.out" },
+        11.4,
+      );
+      tl.from(
+        "#s4-converts",
+        { y: 28, opacity: 0, duration: 0.45, ease: "power2.out" },
+        11.65,
+      );
+      tl.to(
+        "#scene-4",
+        { opacity: 0, duration: 0.4, ease: "power2.inOut" },
+        13.55,
+      );
+      tl.set("#scene-4", { opacity: 0 }, 14.0);
+
+      // ================= Scene 5 (14-17s) — client numbers =================
+      tl.from(
+        "#s5-stat-1",
+        { y: 42, opacity: 0, duration: 0.55, ease: "power2.out" },
+        14,
+      );
+      tl.from(
+        "#s5-stat-2",
+        { y: 42, opacity: 0, duration: 0.55, ease: "power2.out" },
+        14.5,
+      );
+      tl.to(
+        "#scene-5",
+        { opacity: 0, duration: 0.4, ease: "power2.inOut" },
+        16.55,
+      );
+      tl.set("#scene-5", { opacity: 0 }, 17.0);
+
+      // ================= Scene 6 (17-20s) — tagline finale =================
+      tl.from(
+        "#scene-6 .s6-line1",
+        { y: 32, opacity: 0, duration: 0.65, ease: "power2.out" },
+        17,
+      );
+      tl.from(
+        "#scene-6 .s6-line2",
+        { y: 32, opacity: 0, duration: 0.65, ease: "power2.out" },
+        17.45,
+      );
+      tl.from(
+        "#scene-6 .s6-wordmark",
+        { y: 16, opacity: 0, duration: 0.6, ease: "power2.out" },
+        18.15,
+      );
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

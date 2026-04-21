@@ -19,3 +19,7 @@ Thumbs.db
 .env.local
 .claude/
 .mcp.json
+
+# Hyperframes skills (installed via `npx skills add heygen-com/hyperframes`)
+# Not committed — skills-lock.json pins versions for reproducibility
+.agents/
