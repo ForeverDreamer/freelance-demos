@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+node_modules/
+.next/
+dist/
+build/
+.turbo/
+
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Real secrets must not leak via this public sketch
+*.pem
+*.key
+credentials.json
