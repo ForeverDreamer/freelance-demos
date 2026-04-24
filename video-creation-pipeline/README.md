@@ -103,6 +103,12 @@ Numbers below describe the private `video_creation_x` main repo as of 2026-04-19
 
 The main repo is where the delivery value lives. This subdirectory exists so clients can calibrate depth before engaging.
 
+## Full implementation access
+
+Public here: the architecture writeup in [ARCHITECTURE.md](ARCHITECTURE.md), the pseudo-code sketches, and the minimal runnable demo under `demo/`. Enough to verify the architectural claims are real.
+
+Private: the production implementation in `video_creation_x`, roughly 100k lines across Python, ExtendScript, Bash, and PowerShell, ~2,800 commits. Full walkthrough available during an Upwork video call on request, during proposal discussion. All review stays on the Upwork platform; no off-platform screen-share or handoff offered.
+
 ## What this demo does NOT do
 
 - No TCP bridge implementation. The `bridge-server` Blender addon and the Adobe CEP plugins are not shipped here. Their architecture is described in [ARCHITECTURE.md](ARCHITECTURE.md).

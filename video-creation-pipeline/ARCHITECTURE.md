@@ -29,7 +29,8 @@ The shipping implementations of the bridge live in the private main repo. This d
   - [6.2 Why two paths exist](#62-why-two-paths-exist)
   - [6.3 MCP server sketch](#63-mcp-server-sketch)
 - [7. What would it take to reproduce this](#7-what-would-it-take-to-reproduce-this)
-- [8. References](#8-references)
+- [8. Full implementation access](#8-full-implementation-access)
+- [9. References](#9-references)
 
 ---
 
@@ -373,7 +374,15 @@ Rough effort estimate for a competent Python engineer starting from this documen
 
 So roughly 15 to 25 engineer-days for a working single-app version. The production pipeline reached ~100k LOC over ~2,800 commits because it covers 11 Blender effect libraries, 4 Adobe apps, 34 slash commands, 10 skills, 2 MCP servers, WSL2/Windows environment resolution, bilingual i18n, and years of operational polish.
 
-## 8. References
+## 8. Full implementation access
+
+What is public in this subdirectory: the architecture described above, the pseudo-code sketches in §3.3 (Blender bridge-server addon) and §4.1 (CEP Node.js TCP bootstrap), and the minimal runnable demo under `demo/`. Enough to verify the architecture is real, not a slide deck.
+
+What stays in the private main repo: the production implementations of the `bridge-server` addon, all four Adobe CEP plugins (AE, Premiere, Photoshop, Illustrator), the two MCP servers, the 11 Blender procedural effect libraries, 34 Claude Code slash commands, 10 skills, the WSL2 / Windows environment resolver, and bilingual i18n. Roughly 100k LOC.
+
+Review path for clients during proposal discussion: an Upwork video call on request. Screen-share walks through the private main repo end to end, including a live render trigger. Everything stays on the Upwork platform. No off-platform handoff, no archive downloads, no copies sent via email or Drive.
+
+## 9. References
 
 - [Official Model Context Protocol docs](https://modelcontextprotocol.io/)
 - [Adobe CEP documentation](https://github.com/Adobe-CEP/CEP-Resources)
