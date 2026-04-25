@@ -9,9 +9,9 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-BOT_NAME = "demo"
-SPIDER_MODULES = ["demo.spiders"]
-NEWSPIDER_MODULE = "demo.spiders"
+BOT_NAME = "social_crawler"
+SPIDER_MODULES = ["social_crawler.spiders"]
+NEWSPIDER_MODULE = "social_crawler.spiders"
 
 ROBOTSTXT_OBEY = False  # Respected per-spider via explicit public-only targeting
 DOWNLOAD_DELAY = 2
@@ -35,11 +35,11 @@ PLATFORM_CDP_PORTS = {
 }
 
 DOWNLOADER_MIDDLEWARES = {
-    "demo.middlewares.PlaywrightCDPAttachMiddleware": 120,
+    "social_crawler.middlewares.PlaywrightCDPAttachMiddleware": 120,
 }
 
 ITEM_PIPELINES = {
-    "demo.pipelines.JsonLinesPipeline": 300,
+    "social_crawler.pipelines.JsonLinesPipeline": 300,
 }
 
 DATA_DIR = os.getenv("DATA_DIR", "./data")

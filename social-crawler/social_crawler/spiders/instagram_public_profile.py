@@ -15,7 +15,7 @@ from typing import AsyncGenerator
 import scrapy
 from scrapy.http import Request, Response
 
-from demo.items import SocialPostItem
+from social_crawler.items import SocialPostItem
 
 IG_CDP_URL = f"http://localhost:{os.getenv('INSTAGRAM_CDP_PORT', '9224')}"
 

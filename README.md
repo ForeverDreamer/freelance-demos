@@ -14,7 +14,7 @@ deployments.
 | [file-organizer](file-organizer/) | Folder watcher with sub-2s detection and YAML rules | Python, watchdog | 🟡 code ready |
 | [docx-standardizer](docx-standardizer/) | Inconsistent .docx batch normalized via OpenAI strict structured outputs and rebuilt from a master Word template | Python, python-docx, OpenAI structured outputs, Pydantic | 🟡 code ready |
 | [minimal-rag-chat](minimal-rag-chat/) | End-to-end RAG CLI with hybrid BM25 + vector retrieval | Python, OpenAI / Anthropic, rank-bm25 | 🟡 code ready |
-| [social_crawler_demo](social_crawler_demo/) | Scrapy + Playwright CDP attach across Facebook / Twitter / Instagram public profiles | Python, Scrapy, scrapy-playwright | 🟡 code ready |
+| [social-crawler](social-crawler/) | Scrapy + Playwright CDP attach across Facebook / Twitter / Instagram public profiles | Python, Scrapy, scrapy-playwright | 🟡 code ready |
 | [sapphire-studios-promo](sapphire-studios-promo/) | 20s 9:16 brand promo rendered via Claude Code + Hyperframes — HTML/GSAP to deterministic MP4, procedural audio | Hyperframes, GSAP, FFmpeg | 🟢 full deliverable |
 | [video-creation-pipeline](video-creation-pipeline/) | Agentic code-to-video pipeline. Claude Code drives Blender (3D procedural) and Adobe CEP (2D programmatic) as long-lived TCP services. Heavier-stack counterpart to sapphire-studios-promo | Blender Python API, Adobe CEP + ExtendScript, FFmpeg, MCP | 🟡 architecture + demo |
 

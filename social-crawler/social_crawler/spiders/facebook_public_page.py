@@ -12,7 +12,7 @@ from typing import AsyncGenerator
 import scrapy
 from scrapy.http import Request, Response
 
-from demo.items import SocialPostItem
+from social_crawler.items import SocialPostItem
 
 FB_CDP_URL = f"http://localhost:{os.getenv('FB_CDP_PORT', '9222')}"
 

@@ -1,7 +1,7 @@
 """Smoke tests for demo items."""
 from __future__ import annotations
 
-from demo.items import SocialPostItem
+from social_crawler.items import SocialPostItem
 
 
 def test_item_instantiation():

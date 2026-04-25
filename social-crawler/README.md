@@ -1,8 +1,10 @@
-# social-crawler-demo
+# social-crawler
 
-Capability demo: **Scrapy + Playwright CDP attach** architecture targeting public social media data (Facebook / Twitter(X) / Instagram). Showcases multi-platform crawler engineering, not a production pipeline.
+Multi-platform social media scraper (Facebook / Twitter(X) / Instagram) built on Scrapy + Playwright with Chrome DevTools Protocol attach. Each platform runs its own Chrome profile and CDP port, isolating cookies and surviving basic bot detection without headless browsers or rotating datacenter proxies.
 
-## 合规声明 (Important)
+This subdirectory is the **public capability demo**. The full production build (Redis proxy pool, dedup, multi-store pipelines, residential proxy integration) lives in a private repo and is delivered through paid engagement.
+
+## Compliance notice (Important)
 
 - Demonstration code only; targets **public, login-free content**
 - No cookie / credential / session persistence code is bundled
@@ -11,12 +13,25 @@ Capability demo: **Scrapy + Playwright CDP attach** architecture targeting publi
 
 ## What this demo does
 
-- Scrapy 项目结构 (items / spiders / middlewares / pipelines)
+- Scrapy project layout (items / spiders / middlewares / pipelines)
 - Playwright CDP attach to a user-launched Chrome instance
 - 3 platforms × 1 spider each (Facebook public Page, Twitter(X) public profile, Instagram public profile)
 - Per-platform Chrome profile + CDP port isolation (no cookie cross-contamination)
 - Single pipeline: daily sharded JSONL output
 - Cross-platform Chrome launcher (WSL2 / Linux / macOS / Windows)
+
+## Architecture
+
+See [docs/architecture.md](docs/architecture.md) for the full diagram and rationale. TL;DR:
+
+```text
+User-launched Chrome (3 profiles, 3 CDP ports)
+       │
+       ▼
+Scrapy spiders ──► CDP attach middleware ──► JSONL pipeline ──► data/{platform}/YYYY-MM-DD.jsonl
+```
+
+Stack details: [docs/stack.md](docs/stack.md).
 
 ## What this demo does NOT do (and the paid version does)
 
@@ -61,11 +76,11 @@ Three CDP ports (one per platform, independent user-data-dir):
 
 ## Project layout
 
-```
-social_crawler_demo/
+```text
+social-crawler/
 ├── pyproject.toml            # uv-managed
 ├── scrapy.cfg
-├── demo/
+├── social_crawler/
 │   ├── settings.py
 │   ├── items.py              # merged single file
 │   ├── pipelines.py          # JsonLines only
@@ -78,6 +93,9 @@ social_crawler_demo/
 │   └── start_chrome_cdp.py   # Cross-platform Chrome launcher
 ├── examples/
 │   └── sample_output.jsonl   # Example of what output looks like
+├── docs/
+│   ├── architecture.md       # Data flow + per-platform isolation rationale
+│   └── stack.md              # Tier-A stack list and selection notes
 └── tests/
     └── test_items.py
 ```
@@ -88,6 +106,10 @@ social_crawler_demo/
 - Instagram aggressively blocks datacenter IPs; the demo doesn't ship proxy infra (paid version does)
 - Twitter internal API refactors every 2-4 weeks; DOM-based scrolling is more resilient than GraphQL interception but slower
 - Without live Chrome + login, public-only profiles may still rate-limit aggressive scrolling
+
+## Custom builds
+
+For your specific platforms, residential proxy integration, or multi-store pipeline (Postgres / MongoDB / Sheets), reach out on Upwork.
 
 ## License
 
