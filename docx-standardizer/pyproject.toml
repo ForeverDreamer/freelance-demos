@@ -1,0 +1,21 @@
+[project]
+name = "docx-standardizer"
+version = "0.1.0"
+description = "Pipeline that takes inconsistent .docx files, normalizes the structure via OpenAI structured outputs, and rebuilds clean .docx from a master Word template."
+requires-python = ">=3.11"
+dependencies = [
+    "python-docx>=1.1",
+    "openai>=1.50",
+    "pydantic>=2.7",
+    "python-dotenv>=1.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-mock>=3.12",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
