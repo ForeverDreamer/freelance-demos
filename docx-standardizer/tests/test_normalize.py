@@ -85,6 +85,32 @@ def test_normalize_fails_after_retry_exhausted() -> None:
     assert client.chat.completions.create.call_count == 2
 
 
+def test_normalize_openai_uses_strict_json_schema_response_format(
+    fixture_normalized_payload: dict[str, Any],
+) -> None:
+    """OpenAI uses token-level schema enforcement: response_format
+    json_schema with strict=True. The schema is sent as structured config,
+    not embedded in the system prompt."""
+    client = _mock_client([json.dumps(fixture_normalized_payload)])
+    out = normalize(
+        {"title": "x", "paragraphs": [], "tables": [], "metadata": {}},
+        client=client,
+        provider=resolve("openai"),
+    )
+    assert isinstance(out, StandardizedDocument)
+    assert out.title == "Test SOP"
+
+    call_kwargs = client.chat.completions.create.call_args.kwargs
+    assert call_kwargs["model"] == "gpt-4o-2024-08-06"
+    response_format = call_kwargs["response_format"]
+    assert response_format["type"] == "json_schema"
+    assert response_format["json_schema"]["name"] == "StandardizedDocument"
+    assert response_format["json_schema"]["strict"] is True
+    assert response_format["json_schema"]["schema"]["title"] == "StandardizedDocument"
+    system_msg = call_kwargs["messages"][0]["content"]
+    assert "JSON Schema" not in system_msg
+
+
 def test_normalize_deepseek_uses_json_object_mode_with_schema_in_prompt(
     fixture_normalized_payload: dict[str, Any],
 ) -> None:
