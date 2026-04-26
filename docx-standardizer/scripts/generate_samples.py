@@ -63,6 +63,8 @@ def _make_policy() -> None:
     doc.add_paragraph("- Personal Use: any non-business use of company resources.")
     doc.add_paragraph("- Confidential Data: data marked as such by Data Owner.")
     doc.add_paragraph("Responsibilities: IT enforces, Legal interprets.")
+    doc.add_paragraph("Records: signed acknowledgment form, annual training completion log.")
+    doc.add_paragraph("References: ISO 27001 Annex A.6, NIST SP 800-53 AC-1.")
     doc.save(str(INPUT_DIR / "sample_policy.docx"))
 
 
