@@ -109,7 +109,7 @@ social-crawler/
 
 ## Custom builds
 
-For your specific platforms, residential proxy integration, or multi-store pipeline (Postgres / MongoDB / Sheets), reach out on Upwork.
+For your specific platforms, residential proxy integration, or multi-store pipeline (Postgres / MongoDB / Sheets), reach out on Upwork: <https://www.upwork.com/freelancers/~0140562708001afd27>
 
 ## License
 

@@ -123,7 +123,7 @@ Everything listed above is available under contract. This subdirectory proves th
 
 - [sapphire-studios-promo](../sapphire-studios-promo/), the lighter HTML + GSAP + Hyperframes counterpart in this same monorepo
 - [ForeverDreamer on GitHub](https://github.com/ForeverDreamer)
-- Available for AI Video Engineer, creative automation, and agentic workflow engagements. Contact via GitHub issues on [freelance-demos](https://github.com/ForeverDreamer/freelance-demos).
+- Available for AI Video Engineer, creative automation, and agentic workflow engagements. Reach out on Upwork: <https://www.upwork.com/freelancers/~0140562708001afd27>, or via GitHub issues on [freelance-demos](https://github.com/ForeverDreamer/freelance-demos).
 
 ## License
 

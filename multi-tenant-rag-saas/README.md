@@ -81,5 +81,4 @@ MIT. Fork, read, learn freely.
 ## Custom builds
 
 For your own tenant model, billing rules, embedding provider,
-deployment target, or corpus ingestion, reach out on Upwork.
-`<YOUR_UPWORK_PROFILE_URL>`
+deployment target, or corpus ingestion, reach out on Upwork: <https://www.upwork.com/freelancers/~0140562708001afd27>

@@ -139,6 +139,10 @@ sapphire-studios-promo/
         └── synth_bgm.sh         # deterministic regenerator (ffmpeg lavfi chain)
 ```
 
+## Custom builds
+
+For brand-specific kinetic typography promos, agentic HTML→MP4 pipelines, or HeyGen / dynamic-data extensions, reach out on Upwork: <https://www.upwork.com/freelancers/~0140562708001afd27>
+
 ## License
 
 MIT — see root [`LICENSE`](../LICENSE).

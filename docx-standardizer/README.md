@@ -188,4 +188,4 @@ MIT. Fork, read, learn freely.
 
 For your specific master template, custom schema per document type,
 200+ document batch, production deployment, or ongoing maintenance,
-reach out on Upwork: <YOUR_UPWORK_PROFILE_URL>.
+reach out on Upwork: <https://www.upwork.com/freelancers/~0140562708001afd27>
