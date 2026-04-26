@@ -1,11 +1,12 @@
 [project]
 name = "docx-standardizer"
 version = "0.1.0"
-description = "Pipeline that takes inconsistent .docx files, normalizes the structure via OpenAI structured outputs, and rebuilds clean .docx from a master Word template."
+description = "Pipeline that takes inconsistent .docx files, normalizes the structure via a pluggable LLM (DeepSeek / Kimi / MiniMax / Gemini / OpenAI / Claude), and rebuilds clean .docx from a master Word template."
 requires-python = ">=3.11"
 dependencies = [
     "python-docx>=1.1",
     "openai>=1.50",
+    "anthropic>=0.39",
     "pydantic>=2.7",
     "python-dotenv>=1.0",
 ]

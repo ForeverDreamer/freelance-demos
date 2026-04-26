@@ -68,7 +68,9 @@ def test_pipeline_end_to_end_ok(
     response.choices = [MagicMock(message=MagicMock(content=json.dumps(payload)))]
     mock_client.chat.completions.create.return_value = response
 
-    monkeypatch.setattr(normalize_module, "OpenAI", lambda: mock_client)
+    monkeypatch.setattr(
+        normalize_module, "_build_openai_client", lambda cfg: mock_client
+    )
 
     log_lines: List[str] = []
     status = process_file(
