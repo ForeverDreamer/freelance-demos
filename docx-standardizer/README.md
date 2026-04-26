@@ -43,6 +43,9 @@ Three sample files in `input/` get rewritten into `output/` with
 consistent Title / Heading 1 / Heading 2 / Normal / Table Grid styles
 copied from `master.docx`.
 
+To preview `.docx` files in VS Code (and to verify input vs output
+structurally), see [docs/preview-tools.md](docs/preview-tools.md).
+
 ## What this demo shows
 
 | Capability | Where | Proof |
@@ -128,7 +131,7 @@ StackOverflow pattern by python-docx maintainer
 uv run pytest tests/ -v
 ```
 
-Expect `7 passed`. Tests mock the OpenAI client so no API key is
+Expect `13 passed`. Tests mock the OpenAI client so no API key is
 required to run them.
 
 ## License
