@@ -29,7 +29,7 @@
   "editor.guides.bracketPairs": false,
   "editor.stickyScroll.enabled": false,
   "editor.parameterHints.enabled": false,
-  "editor.hover.enabled": false,
+  "editor.hover.enabled": "off",
   "editor.suggestOnTriggerCharacters": false,
   "editor.quickSuggestions": {
     "other": "off",
