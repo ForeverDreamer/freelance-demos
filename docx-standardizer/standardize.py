@@ -1,8 +1,9 @@
-"""Orchestrator: extract -> normalize -> rebuild for every .docx in input/. Per-file logging with three statuses (OK / PARTIAL / FAILED). Errors do not halt the batch."""
+"""Orchestrator: extract -> normalize -> rebuild for every .docx in input/. Per-file logging with three statuses (OK / PARTIAL / FAILED). Errors do not halt the batch. Log lines stream to stdout live; FAILED lines additionally dump traceback to stderr so root cause is visible during live demos."""
 
 import argparse
 import datetime as dt
 import sys
+import traceback
 from pathlib import Path
 from typing import List
 
@@ -16,6 +17,15 @@ from schema import StandardizedDocument
 
 def _ts() -> str:
     return dt.datetime.now().isoformat(timespec="seconds")
+
+
+def _emit(line: str, log_lines: List[str]) -> None:
+    log_lines.append(line)
+    print(line, flush=True)
+
+
+def _emit_traceback() -> None:
+    print(traceback.format_exc(), file=sys.stderr, flush=True)
 
 
 def _classify(normalized: StandardizedDocument) -> str:
@@ -38,17 +48,21 @@ def process_file(
     try:
         extracted = extract(path)
     except Exception as e:
-        log_lines.append(
-            f"{_ts()} | {path.name} | FAILED | extract: {type(e).__name__}: {e}"
+        _emit(
+            f"{_ts()} | {path.name} | FAILED | extract: {type(e).__name__}: {e}",
+            log_lines,
         )
+        _emit_traceback()
         return "FAILED"
 
     try:
         normalized = normalize(extracted)
     except (NormalizationFailed, Exception) as e:
-        log_lines.append(
-            f"{_ts()} | {path.name} | FAILED | normalize: {type(e).__name__}: {e}"
+        _emit(
+            f"{_ts()} | {path.name} | FAILED | normalize: {type(e).__name__}: {e}",
+            log_lines,
         )
+        _emit_traceback()
         return "FAILED"
 
     try:
@@ -56,13 +70,15 @@ def process_file(
         out_path = output_dir / f"{path.stem}_standardized.docx"
         doc.save(str(out_path))
     except Exception as e:
-        log_lines.append(
-            f"{_ts()} | {path.name} | FAILED | rebuild: {type(e).__name__}: {e}"
+        _emit(
+            f"{_ts()} | {path.name} | FAILED | rebuild: {type(e).__name__}: {e}",
+            log_lines,
         )
+        _emit_traceback()
         return "FAILED"
 
     status = _classify(normalized)
-    log_lines.append(f"{_ts()} | {path.name} | {status} | wrote {out_path.name}")
+    _emit(f"{_ts()} | {path.name} | {status} | wrote {out_path.name}", log_lines)
     return status
 
 
@@ -89,9 +105,8 @@ def main() -> int:
         f"Processed {sum(counts.values())} files. "
         f"OK: {counts['OK']}, PARTIAL: {counts['PARTIAL']}, FAILED: {counts['FAILED']}"
     )
-    log_lines.append(f"{_ts()} | summary | {summary}")
+    _emit(f"{_ts()} | summary | {summary}", log_lines)
     args.log.write_text("\n".join(log_lines) + "\n", encoding="utf-8")
-    print(summary)
     return 0 if counts["FAILED"] == 0 else 1
 
 
