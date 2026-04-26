@@ -28,11 +28,24 @@ def _make_master() -> None:
         style.font.size = Pt(font_size)
         style.font.bold = bold
         style.font.color.rgb = color
-    doc.add_paragraph("Master Template", style="Title")
-    doc.add_paragraph("Section", style="Heading 1")
-    doc.add_paragraph("Subsection", style="Heading 2")
-    doc.add_paragraph("Body text in Normal style.", style="Normal")
-    doc.add_table(rows=1, cols=2, style="Table Grid")
+    doc.add_paragraph("Document Title (Master Template)", style="Title")
+    doc.add_paragraph("1. Section Heading", style="Heading 1")
+    doc.add_paragraph(
+        "Body paragraphs use the Normal style: 11pt, black, no bold. "
+        "Use this style for all running text, regardless of section.",
+        style="Normal",
+    )
+    doc.add_paragraph("1.1 Subsection Heading", style="Heading 2")
+    doc.add_paragraph(
+        "Subsections inherit Normal styling for their body content. "
+        "All headings, numbering, and color come from this master.",
+        style="Normal",
+    )
+    table = doc.add_table(rows=2, cols=2, style="Table Grid")
+    table.rows[0].cells[0].text = "Column A"
+    table.rows[0].cells[1].text = "Column B"
+    table.rows[1].cells[0].text = "Sample value"
+    table.rows[1].cells[1].text = "Sample value"
     doc.save(str(MASTER_PATH))
 
 
