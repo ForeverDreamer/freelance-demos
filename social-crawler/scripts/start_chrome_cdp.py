@@ -31,6 +31,7 @@ PLATFORM_DEFAULT_PORTS = {
     "fb": 9222,
     "twitter": 9223,
     "instagram": 9224,
+    "tiktok": 9225,
 }
 
 CHROME_CANDIDATES = {

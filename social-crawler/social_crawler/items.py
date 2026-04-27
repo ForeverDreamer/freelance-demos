@@ -5,7 +5,7 @@ import scrapy
 
 
 class SocialPostItem(scrapy.Item):
-    platform = scrapy.Field()            # "fb" | "twitter" | "instagram"
+    platform = scrapy.Field()            # "fb" | "twitter" | "instagram" | "tiktok"
     post_id = scrapy.Field()
     url = scrapy.Field()
     author_handle = scrapy.Field()
@@ -19,7 +19,11 @@ class SocialPostItem(scrapy.Item):
     source_spider = scrapy.Field()
     source_query = scrapy.Field()
     # Platform-specific optional fields (loose schema for demo simplicity)
-    shares_count = scrapy.Field()        # FB
+    shares_count = scrapy.Field()        # FB / TikTok
     retweets_count = scrapy.Field()      # Twitter
     shortcode = scrapy.Field()           # IG
     media_type = scrapy.Field()          # IG
+    # TikTok-specific
+    plays_count = scrapy.Field()         # TikTok playCount
+    cover_url = scrapy.Field()           # TikTok video cover thumbnail
+    hashtags = scrapy.Field()            # TikTok textExtra hashtags

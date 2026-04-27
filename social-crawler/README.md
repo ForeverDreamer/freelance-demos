@@ -1,6 +1,6 @@
 # social-crawler
 
-Multi-platform social media scraper (Facebook / Twitter(X) / Instagram) built on Scrapy + Playwright with Chrome DevTools Protocol attach. Each platform runs its own Chrome profile and CDP port, isolating cookies and surviving basic bot detection without headless browsers or rotating datacenter proxies.
+Multi-platform social media scraper (Facebook / Twitter(X) / Instagram / TikTok) built on Scrapy + Playwright with Chrome DevTools Protocol attach. Each platform runs its own Chrome profile and CDP port, isolating cookies and surviving basic bot detection without headless browsers or rotating datacenter proxies.
 
 This subdirectory is the **public capability demo**. The full production build (Redis proxy pool, dedup, multi-store pipelines, residential proxy integration) lives in a private repo and is delivered through paid engagement.
 
@@ -15,7 +15,7 @@ This subdirectory is the **public capability demo**. The full production build (
 
 - Scrapy project layout (items / spiders / middlewares / pipelines)
 - Playwright CDP attach to a user-launched Chrome instance
-- 3 platforms × 1 spider each (Facebook public Page, Twitter(X) public profile, Instagram public profile)
+- 4 platforms × 1 spider each (Facebook public Page, Twitter(X) public profile, Instagram public profile, TikTok public profile)
 - Per-platform Chrome profile + CDP port isolation (no cookie cross-contamination)
 - Single pipeline: daily sharded JSONL output
 - Cross-platform Chrome launcher (WSL2 / Linux / macOS / Windows)
@@ -25,7 +25,7 @@ This subdirectory is the **public capability demo**. The full production build (
 See [docs/architecture.md](docs/architecture.md) for the full diagram and rationale. TL;DR:
 
 ```text
-User-launched Chrome (3 profiles, 3 CDP ports)
+User-launched Chrome (4 profiles, 4 CDP ports)
        │
        ▼
 Scrapy spiders ──► CDP attach middleware ──► JSONL pipeline ──► data/{platform}/YYYY-MM-DD.jsonl
@@ -66,13 +66,14 @@ uv run scrapy crawl twitter_public_profile -a handle=anthropicai -a max_tweets=1
 # Output: data/twitter/YYYY-MM-DD.jsonl
 ```
 
-Three CDP ports (one per platform, independent user-data-dir):
+Four CDP ports (one per platform, independent user-data-dir):
 
 | Platform | Default port | Chrome profile dir |
 | ---- | ---- | ---- |
 | `fb` | 9222 | `~/.chrome-profiles/fb` |
 | `twitter` | 9223 | `~/.chrome-profiles/twitter` |
 | `instagram` | 9224 | `~/.chrome-profiles/instagram` |
+| `tiktok` | 9225 | `~/.chrome-profiles/tiktok` |
 
 ## Project layout
 
@@ -88,7 +89,8 @@ social-crawler/
 │   └── spiders/
 │       ├── facebook_public_page.py
 │       ├── twitter_public_profile.py
-│       └── instagram_public_profile.py
+│       ├── instagram_public_profile.py
+│       └── tiktok_public_profile.py
 ├── scripts/
 │   └── start_chrome_cdp.py   # Cross-platform Chrome launcher
 ├── examples/
@@ -102,9 +104,10 @@ social-crawler/
 
 ## Known limitations (honest)
 
-- DOM selectors on FB / IG / X change frequently (2-4 weeks); expect to tune the JS in each spider's `_extract_js()` method
+- DOM selectors on FB / IG / X / TikTok change frequently (2-4 weeks); expect to tune the JS in each spider's extraction logic
 - Instagram aggressively blocks datacenter IPs; the demo doesn't ship proxy infra (paid version does)
 - Twitter internal API refactors every 2-4 weeks; DOM-based scrolling is more resilient than GraphQL interception but slower
+- TikTok comments and search APIs require request signing (X-Bogus / X-Gnarly / msToken) that rotates every 2-4 weeks; the demo intentionally targets only login-free profile + video-grid pages where the embedded JSON is parseable without signing. Comments and large-scale search are out of scope here and recommended to be handled via paid APIs (EnsembleData / Apify ScrapTik / ScrapeCreators)
 - Without live Chrome + login, public-only profiles may still rate-limit aggressive scrolling
 
 ## Custom builds
