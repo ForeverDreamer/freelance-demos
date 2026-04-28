@@ -14,7 +14,7 @@ This demo solves both:
 - **33-column schema** mirrors the analyst Excel template exactly (six section groupings: FIRM IDENTITY / INVESTMENT OVERVIEW / PLATFORM SEARCH CRITERIA / ADD-ON SEARCH CRITERIA / DEAL STRUCTURE / META). PE-internal numerical fields stay at the literal `[REQUIRES EXTERNAL]` marker; the writer highlights those cells yellow in the output `.xlsx` so a reviewer can route them to the data-subscription provider in one pass.
 - **Confidence-tagged output** (`High` / `Medium` / `Low`) per row, computed from website-stated coverage of HQ + ≥1 platform industry. Rows with weak signal surface for review rather than passing silently.
 
-On a 10-firm pilot against well-known PE buyers, **7/8 fetched firms reach High confidence**, with HQ filled correctly for 7/8 and platform industries for 7/8. The single Medium row is a known seed-data artifact (a portfolio company misclassified as a buyer) and is correctly flagged. Per-firm cost on DeepSeek V3 is ~$0.003; full 10K-firm projection is ~$28 LLM compute including failure-retry buffer.
+On a 10-firm pilot against well-known PE buyers, **7/8 fetched firms reach High confidence**, with HQ filled correctly for 7/8 and platform industries for 7/8. The single Medium row is a known seed-data artifact (a portfolio company misclassified as a buyer) and is correctly flagged. Per-firm LLM cost stays low on current DeepSeek V3 pricing; full 10K-firm runs project to a modest LLM compute budget plus failure-retry buffer (recompute against latest pricing before quoting; DeepSeek pricing has changed multiple times since this README was first authored).
 
 ## Quick demo
 
@@ -114,7 +114,7 @@ data/sample_input.csv ──┐
 - **Python 3.11+** managed by [uv](https://docs.astral.sh/uv/) (no system-Python conflicts; `uv.lock` reproduces exactly).
 - **httpx + tenacity** for async fetch with retry on transient network errors.
 - **selectolax** for fast HTML parsing (anchor discovery + noise tag removal). 10x faster than BeautifulSoup on the homepages tested.
-- **DeepSeek V3** (`deepseek-chat`) via `openai` SDK in OpenAI-compatible mode. ~5x cheaper than `gpt-4o-mini` at equivalent extraction quality on this task. Swap to OpenAI by setting `MNA_LLM_PROVIDER=openai`.
+- **DeepSeek V3** (`deepseek-chat`) via `openai` SDK in OpenAI-compatible mode. Cost-effective choice for high-volume structured extraction at quality comparable to GPT-4o-mini-class options on this task (DeepSeek V3 outperforms GPT-4o-mini on multiple LLM benchmarks per [LLM-Stats](https://llm-stats.com/models/compare/deepseek-v3-vs-gpt-4o-mini-2024-07-18); pricing parity / cost ratio depends on current DeepSeek tier and may change, recompute before quoting). Swap to OpenAI by setting `MNA_LLM_PROVIDER=openai`.
 - **Pydantic v2** for schema validation; the same `FirmRecord` model is the single source of truth for both LLM JSON parse and Excel output column ordering.
 - **openpyxl** for `.xlsx` writer with merged section headers, conditional cell highlighting, and frozen panes.
 
