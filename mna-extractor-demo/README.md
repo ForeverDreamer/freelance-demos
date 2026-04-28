@@ -18,16 +18,38 @@ On a 10-firm pilot against well-known PE buyers, **7/8 fetched firms reach High 
 
 ## Quick demo
 
-```bash
-# Install uv if you don't have it (https://docs.astral.sh/uv/)
-curl -LsSf https://astral.sh/uv/install.sh | sh
+### Prerequisites
 
+- A **DeepSeek API key**: get one at <https://platform.deepseek.com>. This is the only required configuration; other settings have safe defaults.
+- **uv** (Python project manager). Install once: <https://docs.astral.sh/uv/getting-started/installation/>. uv handles Python 3.11+ automatically.
+
+### Get the code
+
+**Option A (no git required, recommended for non-developers):**
+
+1. Open <https://github.com/ForeverDreamer/freelance-demos> in your browser
+2. Click the green **Code** button → **Download ZIP**
+3. Extract the ZIP, then navigate into `freelance-demos-main/mna-extractor-demo/`
+4. Right-click inside that folder → **Open in Terminal** (Windows 11 / macOS Finder / most Linux file managers support this natively)
+
+**Option B (developer):**
+
+```bash
+git clone https://github.com/ForeverDreamer/freelance-demos
+cd freelance-demos/mna-extractor-demo
+```
+
+### Run
+
+```bash
 # Sync deps (creates .venv, installs from uv.lock)
 uv sync
 
-# Configure DeepSeek API key (https://platform.deepseek.com)
+# Configure the API key
 cp .env.example .env
-# Edit .env and fill DEEPSEEK_API_KEY
+# Open .env in any text editor (Notepad / TextEdit / VS Code) and fill DEEPSEEK_API_KEY.
+# Other variables (provider, model, timeout, UA, output path) have safe defaults
+# documented in .env.example.
 
 # Fetch-only smoke (no LLM, sanity-check the network path)
 uv run python -m mna_extractor.cli fetch --input data/sample_input.csv --concurrency 5
