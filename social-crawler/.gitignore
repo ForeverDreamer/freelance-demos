@@ -1,13 +1,23 @@
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
-.venv/
-uv.lock
+.ruff_cache/
+.mypy_cache/
 
+# Env / secrets
 .env
-/data/
-*.jsonl
-!examples/*.jsonl
+.env.local
 
-.scrapy/
+# Data output
+/data
+*.jsonl
+
+# Virtualenv
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/

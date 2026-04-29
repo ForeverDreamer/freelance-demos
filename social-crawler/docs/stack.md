@@ -1,35 +1,75 @@
 # Stack
 
-| Layer | Tech | Why |
-| ---- | ---- | ---- |
-| Crawl framework | Scrapy 2.x | Battle-tested project structure: items / spiders / middlewares / pipelines pattern; built-in concurrency control |
-| Browser automation | Playwright + Chrome DevTools Protocol attach | Real Chrome plus real login profile is harder to fingerprint than headless; CDP attach reuses an already-trusted browser instance |
-| Async HTTP | httpx, asyncpg | Used in the production version's Postgres pipeline (omitted from demo) |
-| Storage (paid version) | PostgreSQL via SQLAlchemy 2 + asyncpg, MongoDB via Motor, Redis | Pluggable; per-customer choice |
-| Proxy infra (paid version) | Redis pool, validator loop, sticky-per-profile binding | Avoids the "profile sees IP jumping → flagged" failure mode |
-| Process control | psutil | Cross-platform Chrome process detection and health checks |
-| Cross-platform launchers | bash + PowerShell + macOS .command | One repo, three OS environments |
-| Dependency management | uv | Fast resolution, lockfile-driven reproducibility |
+## Runtime
 
-## Versions in this demo
+- **Python 3.11+** — required for native `asyncio` task groups and the
+  generic `dict[K, V]` syntax used across the codebase.
+- **uv** — dependency manager (does not require a separate Python install).
 
-The demo's `pyproject.toml` pins:
+## Direct runtime dependencies
 
-- `scrapy >= 2.11`
-- `scrapy-playwright >= 0.0.34`
-- `playwright >= 1.45`
+| Package | Why |
+| ---- | ---- |
+| [`playwright`](https://playwright.dev/python/) | Browser automation via CDP attach. We use `connect_over_cdp` (not `chromium.launch`) so the crawler attaches to a user-launched Chrome instance and inherits its session. |
+| [`python-dotenv`](https://pypi.org/project/python-dotenv/) | `.env` file loader for CDP port overrides and data-dir settings. |
+| [`click`](https://click.palletsprojects.com/) | CLI framework (`python -m social_crawler.main <subcommand>`). One subcommand per spider. |
 
-Production version pins extra:
+The demo deliberately ships **without**:
 
-- `redis >= 5.0` for proxy pool and dedup
-- `asyncpg >= 0.29` plus `SQLAlchemy >= 2.0` for the Postgres pipeline
-- `motor >= 3.3` for the MongoDB pipeline
-- `gspread >= 6.0` for the Google Sheets pipeline
-- `psutil >= 5.9` for cross-platform Chrome process control
+- Redis (paid version: dedup with TTL)
+- MongoDB driver (paid version: warehouse upsert)
+- aiohttp / httpx (everything goes through Playwright; no parallel HTTP
+  fetch in the demo)
+- Loguru / structlog (paid version: structured JSON log lines)
 
-## Why these choices
+## Why these picks
 
-- **Scrapy over a hand-rolled aiohttp loop**: Scrapy's middleware chain, retry semantics, and concurrency knobs would have to be re-implemented anyway. The Playwright integration via `scrapy-playwright` is the cleanest path
-- **CDP attach over Playwright launch**: a freshly launched Playwright Chromium fails basic bot detection on all three platforms in under a minute. Attaching to a user-launched Chrome reuses real session trust
-- **Per-platform profiles over a single shared profile**: keeps each platform's fingerprint stable and prevents cookie cross-contamination
-- **uv over pip + venv**: lockfile reproducibility and faster cold starts; matches the rest of the freelance-demos monorepo
+### Playwright over Selenium
+
+- Native async API → no thread bridge, no GIL contention with Python's event
+  loop.
+- First-class `connect_over_cdp` for attach-mode (Selenium does have CDP
+  support but the abstraction is leakier).
+- `page.locator(...)` auto-retries on stale handles, which matters for SPA
+  apps that re-mount React subtrees during typing.
+- Cross-browser support out of the box (we only use Chromium here, but the
+  abstraction makes Firefox/WebKit a small change).
+
+### asyncio over Twisted (Scrapy)
+
+The first iteration was Scrapy + scrapy-playwright. Twisted's reactor runs
+its cross-thread emit path on a 5-second tick. Single-step optimizations
+inside an `await` chain were absorbed by the reactor tick boundary — the
+crawler's wall-clock time was unmoved by 5–10 s of accumulated savings. See
+[architecture.md](architecture.md) for the full story.
+
+### click over argparse
+
+argparse can do this too, but click's group-and-subcommand pattern is
+clearer for a crawler with one entrypoint per platform.
+
+### `uv` over `pip` + `venv`
+
+- `uv sync` is reproducible (locks in `uv.lock`).
+- `uv run` activates the venv on the fly without `source .venv/bin/activate`
+  ceremony.
+- Parses `pyproject.toml` directly (PEP 621) — no separate `setup.py`.
+
+## Browser
+
+- **Chrome / Chromium** (any recent version). Chrome 136+ silently ignores
+  `--remote-debugging-port` if `--user-data-dir` is the OS default; the
+  launcher script defaults to `~/.chrome-profiles/<platform>/` which avoids
+  this.
+- The user logs in manually once per platform; session persists in the
+  per-platform user-data-dir. The crawler never sees credentials.
+
+## Tested on
+
+- WSL2 Ubuntu (primary dev environment) with Windows-side Chrome
+- macOS (Sonoma) with Homebrew-installed Chrome
+- Native Linux (Ubuntu 22.04) with `apt`-installed Chromium
+
+Windows-native Python should work but is not the primary test target. The
+WSL2 path (Linux Python attaching to Windows Chrome over `localhost`) is
+the maintained one.

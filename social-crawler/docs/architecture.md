@@ -1,76 +1,126 @@
 # Architecture
 
-Demo version of the multi-platform social crawler, drawn at the level of evidence rather than production scope. The internal repo carries the Redis proxy pool, dedup, multi-store pipelines, and cleaning middleware that this public sketch deliberately omits.
+## Why pure asyncio + Playwright (and not Scrapy)
+
+The first iteration of this crawler was built on Scrapy + scrapy-playwright.
+After 17 iterations of optimization the spider's end-to-end time stalled at
+~100 s — and the timing log showed every event landing on the 5-second
+boundary (e.g., 9.99 s, 14.99 s, 19.99 s). The cause:
+
+> scrapy-playwright runs Playwright in a separate thread and re-emits its
+> events through Twisted's reactor. The reactor cross-thread emit path
+> processes pending events on a 5-second tick. So no matter how much we
+> shaved off any individual `await` (a popup-wait from 10 s to 5 s, a
+> wait_for_load_state removal that should have saved 1.5 s), the event
+> didn't reach the Python log handler until the next reactor tick boundary.
+> Total click-flow time stayed at ~50 s regardless.
+
+Switching to pure asyncio + Playwright eliminated this overhead. The same
+crawler now runs in 0.9–5.1 s per spider (Facebook is an exception at ~23 s
+because Facebook's Page-search lazy-load is structurally slow).
+
+## Click-flow over `page.goto`
+
+The crawler triggers each navigation via a real DOM click — not via
+`page.goto(url)` — because:
+
+| Server-side observation | `page.goto(url)` | Real click |
+| ---- | ---- | ---- |
+| `sec-fetch-user` header | `?0` (no user gesture) | `?1` (user gesture) |
+| Navigation type | Fresh document fetch | SPA `pushState` (no doc fetch) |
+| Telemetry pattern | "Stale background tab + jump" | "User clicks button → SPA route change" |
+| Likelihood of challenge | Higher | Lower |
+
+The crawler reproduces the real-click pattern by:
+
+1. Connecting via CDP to a Chrome window the user opened manually
+2. Reusing `browser.contexts[0].pages[0]` (the user's existing tab)
+3. Triggering each step with `page.locator(...).click()`, which goes through
+   CDP's `Input.dispatchMouseEvent` with `isTrusted=true`
+
+For each platform the click-flow has a fixed shape:
+
+```text
+homepage → search trigger → fill query → typeahead/click → SPA navigate
+```
+
+Per-platform variations are documented in each spider's docstring.
+
+## Anti-bot watcher
+
+`PageChallengeWatcher` (in `anti_bot.py`) listens to two Playwright `page`
+events:
+
+- `framenavigated` — main-frame URL changed. If the new URL contains a
+  challenge fragment (`/checkpoint/`, `/captcha-verify`, `/i/flow/login`,
+  etc.), set `triggered=True`.
+- `response` — main-frame main-document HTTP response. If status is
+  401 / 403 / 429 / 451 / 503, set `triggered=True`.
+
+The spider's scroll/extract loop checks `watcher.triggered` each iteration.
+On trigger the spider exits gracefully (no exception is raised inside the
+async event-loop callback — Playwright callbacks swallow exceptions, so the
+spider main loop reads the flag and breaks).
 
 ## Data flow
 
 ```text
-┌───────────────────────────────────────────────────────────────┐
-│  User-launched Chrome (one window per platform)               │
-│                                                               │
-│   profile=fb        port=9222   ~/.chrome-profiles/fb         │
-│   profile=twitter   port=9223   ~/.chrome-profiles/twitter    │
-│   profile=instagram port=9224   ~/.chrome-profiles/instagram  │
-└──────────────┬─────────────┬─────────────┬────────────────────┘
-               │             │             │
-               ▼             ▼             ▼
-       ┌────────────────────────────────────────┐
-       │  Scrapy spiders (one per platform)     │
-       │  - facebook_public_page                │
-       │  - twitter_public_profile              │
-       │  - instagram_public_profile            │
-       └──────────────┬─────────────────────────┘
-                      │
-                      ▼
-       ┌────────────────────────────────────────┐
-       │  CDP attach middleware                 │
-       │  - reads spider.platform → CDP port    │
-       │  - playwright.connect_over_cdp(...)    │
-       └──────────────┬─────────────────────────┘
-                      │
-                      ▼
-       ┌────────────────────────────────────────┐
-       │  JSONL pipeline (demo only)            │
-       │  - data/{platform}/YYYY-MM-DD.jsonl    │
-       └────────────────────────────────────────┘
+                    ┌──────────────────────────────┐
+                    │  scripts/start_chrome_cdp.py  │
+                    │  (cross-platform launcher)    │
+                    └──────────────┬───────────────┘
+                                   │ launches
+                                   ▼
+       ┌────────────────────────────────────────────┐
+       │  Chrome (user-launched, --remote-debugging) │
+       │  Port:    9222 / 9223 / 9224 / 9225         │
+       │  Profile: ~/.chrome-profiles/<platform>/    │
+       │  Tab(s):  user-opened, may be logged in     │
+       └─────────────────┬──────────────────────────┘
+                         │ CDP attach
+                         ▼
+           ┌──────────────────────────────┐
+           │  src/social_crawler/browser  │
+           │  cdp_session(platform):      │
+           │    connect_over_cdp()        │
+           │    reuse contexts[0].pages   │
+           │    nav reset to homepage     │
+           └────────────┬────────────────┘
+                        │ yields page
+                        ▼
+        ┌──────────────────────────────────────┐
+        │  src/social_crawler/spiders/<name>   │
+        │  click-flow → DOM extract via        │
+        │  page.evaluate                       │
+        │  PageChallengeWatcher attached       │
+        └────────────┬─────────────────────────┘
+                     │ yield item (dataclass)
+                     ▼
+            ┌───────────────────────────┐
+            │  pipelines.run_pipelines  │
+            │  → clean()                │
+            │  → write_jsonl()          │
+            └────────────┬──────────────┘
+                         ▼
+            data/<platform>/YYYY-MM-DD.jsonl
 ```
 
-## Why CDP attach instead of fresh headless
+## Per-platform notes
 
-Three observations drove the architecture:
+| Platform | Search input | Typeahead | URL pattern |
+| ---- | ---- | ---- | ---- |
+| TikTok | Click `nav-search` to open popup; second `search-user-input` | Click profile card in Users tab | /search?q=* → /@\<u\> |
+| Twitter (X) | `SearchBox_Search_Input` always visible | Click "Go to @\<handle\>" listbox button | typeahead → /\<handle\> |
+| Facebook | `input[type="search"]` always visible | Click `/search/pages/?q=*` filter tab | /search/top → /search/pages → /\<handle\> |
+| Instagram | Click sidebar Search → panel slides out | Click typeahead `a[href="/<u>/"]` | / → /\<u\>/ |
 
-1. Fresh headless Chromium triggers basic bot detection on all three platforms within minutes, even on public pages. Real Chrome with a persistent profile and manual login goes further on a single account before rate limits kick in.
-2. Cookie cross-contamination is a real failure mode: if one Chrome instance holds three logged-in accounts, the platform sees the unusual fingerprint and downgrades trust. Per-platform profiles plus per-platform user-data-dir keep each session looking like an ordinary user.
-3. CDP attach lets Scrapy reuse the network stack and rendered DOM of a Chrome the user already trusts, instead of trying to reproduce that trust from scratch each crawl.
+Trusted-vs-JS click preference also varies:
 
-## Profile and port isolation
+- **TikTok**: requires Playwright trusted CDP click on `nav-search` (the
+  React `onClick` gates on `event.isTrusted`).
+- **Instagram**: the opposite — Playwright trusted click on the sidebar
+  Search button does not reliably trigger; we fall back to JS-dispatched
+  `element.click()` via `page.evaluate`.
+- **Twitter, Facebook**: either works.
 
-Each platform binds to a fixed user-data-dir and a fixed CDP port. Switching platforms means starting a different Chrome process, not a different tab inside the same browser. This is intentional:
-
-- Cookies, localStorage, and IndexedDB are scoped per user-data-dir, so a Facebook session never leaks into the Instagram crawl
-- The CDP port is the integration boundary the spider sees; the spider does not know or care what is logged in
-- Replacing the proxy attached to one Chrome profile does not perturb the other two
-
-## What the paid version adds (omitted here by design)
-
-| Layer | Demo | Paid version |
-| ---- | ---- | ---- |
-| Storage | JSONL only | JSON + MongoDB + PostgreSQL + Google Sheets |
-| Dedup | None | Redis SET with TTL, keyed on `(platform, post_id)` |
-| Proxy pool | None | Redis-backed pool with validator, sticky-per-profile binding |
-| Cleaning pipeline | None | Time normalization, zero-width char strip, required-field guards |
-| Rate limiting | Scrapy default `DOWNLOAD_DELAY=2` | Per-spider token bucket, behavior-aware |
-| Residential proxy integration | None | Bright Data / Smartproxy provider plug-ins |
-| User-agent rotation | None | Rotating UA middleware tied to proxy provider |
-
-The paid version's Redis proxy pool with sticky-per-profile binding is the layer Instagram and X actually require in production. Datacenter IPs get banned within hours on those two platforms regardless of browser type.
-
-## TODO: see private repo for full implementation
-
-- `proxy/pool.py` Redis store with downgrade on failure
-- `proxy/validator.py` async aiohttp liveness checker
-- `pipelines/dedup.py` Redis SET-based dedup with TTL
-- `pipelines/clean.py` field normalization and zero-width strip
-- `proxy/providers/<vendor>.py` Bright Data / Smartproxy adapters
-- `middlewares/user_agent.py` rotating UA tied to proxy
-- `middlewares/rate_limit.py` per-spider token bucket
+For details see the docstring at the top of each spider file.
