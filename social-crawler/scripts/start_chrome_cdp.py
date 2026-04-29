@@ -4,6 +4,9 @@ Each platform runs in its own user-data-dir so cookies do not cross-contaminate.
 After the Chrome window opens, the user logs in manually if needed; the
 session persists in the user-data-dir and is reused on subsequent runs.
 
+Public demo scope: 2 platforms (twitter / tiktok). The paid version adds
+Facebook / Instagram launchers plus a residential-proxy binding mode.
+
 ⚠️ Chrome 136+ security note
     Since 2025-03 Chrome silently ignores --remote-debugging-port if the
     user-data-dir is the OS default (anti cookie-theft). This script defaults
@@ -15,9 +18,8 @@ session persists in the user-data-dir and is reused on subsequent runs.
         Linux: ~/.config/google-chrome
 
 Usage:
-    python scripts/start_chrome_cdp.py --platform fb
-    python scripts/start_chrome_cdp.py --platform twitter --port 9223
-    python scripts/start_chrome_cdp.py --platform instagram --user-data-dir /tmp/ig
+    python scripts/start_chrome_cdp.py --platform twitter
+    python scripts/start_chrome_cdp.py --platform tiktok --port 9225
 """
 from __future__ import annotations
 
@@ -39,9 +41,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 PLATFORM_DEFAULT_PORTS = {
-    "fb": 9222,
     "twitter": 9223,
-    "instagram": 9224,
     "tiktok": 9225,
 }
 

@@ -1,17 +1,20 @@
 """Anti-bot detection: shared constants + Playwright page event listener.
 
-The crawler avoids common detection paths (no headless mode, no
-`navigator.webdriver`, no automation Chrome flags), but server-side challenges
-can still appear. This module catches them via Playwright page events:
+Public demo scope: a minimal pattern set covering the two demo platforms
+(Twitter / TikTok) plus generic challenge fragments. The paid version
+ships an extended pattern catalog covering Facebook checkpoint flows,
+Instagram suspended-account / login-wall variants, datacenter-IP soft
+blocks, regional CAPTCHA variants, and HTTP-status edge cases tuned per
+platform. Extend `STOP_SIGNAL_FRAGMENTS` per platform in production.
 
-- `framenavigated` — the SPA pushed history to a challenge URL (e.g.,
-  `/checkpoint/`, `/i/flow/login`, `/captcha-verify`)
-- `response` — main document returned 401 / 403 / 429 / 451 / 503
+Mechanism:
+
+- `framenavigated` — the SPA pushed history to a challenge URL
+- `response`       — main document returned 401 / 403 / 429 / 451 / 503
 
 When triggered, `PageChallengeWatcher.triggered` is set to True with a reason
 string. The spider checks this flag in its scroll/extract loop and exits
-gracefully (no exception is raised inside the Playwright callback because
-async event-loop callbacks swallow exceptions).
+gracefully.
 """
 from __future__ import annotations
 
@@ -20,7 +23,8 @@ from typing import Iterable, Optional
 
 logger = logging.getLogger(__name__)
 
-# URL fragments that indicate a challenge or login wall.
+# URL fragments that indicate a challenge or login wall (demo subset).
+# Production catalog is platform-specific and tuned per engagement.
 STOP_SIGNAL_FRAGMENTS: tuple[str, ...] = (
     # Generic
     "challenge",
@@ -28,20 +32,10 @@ STOP_SIGNAL_FRAGMENTS: tuple[str, ...] = (
     "/login",
     "verify",
     "blocked",
-    "/account-security",
-    "/email-verification",
-    "/2fa",
-    "/security/",
-    "cf-chl",         # Cloudflare challenge fragment
-    "datadome",
-    # Platform-specific
-    "/checkpoint/",            # Facebook checkpoint
-    "/i/flow/login",           # Twitter (X) SPA login flow
-    "/accounts/login/",        # Instagram login wall
-    "/accounts/suspended",     # Instagram suspended account notice
-    "/captcha-verify",         # TikTok CAPTCHA interstitial
-    "/login/phone-or-email",   # TikTok forced login wall
-    "/notice/banned",          # TikTok account banned notice
+    # Twitter (X) — single representative pattern
+    "/i/flow/login",
+    # TikTok — single representative pattern
+    "/captcha-verify",
 )
 
 # HTTP status codes on the main document that indicate stop conditions.
@@ -66,7 +60,6 @@ class PageChallengeWatcher:
     Usage:
         watcher = PageChallengeWatcher(page)
         try:
-            # spider's click-flow + extract loop
             for ... :
                 if watcher.triggered:
                     break
@@ -109,8 +102,6 @@ class PageChallengeWatcher:
 
     def _on_response(self, response) -> None:
         try:
-            # Only main-frame main-document responses; sub-resource 401/403
-            # may legitimately be a third-party widget.
             if response.frame is not self.page.main_frame:
                 return
             if response.request.resource_type != "document":
@@ -134,7 +125,6 @@ class PageChallengeWatcher:
         )
 
     def detach(self) -> None:
-        """Explicitly remove listeners (called in spider's finally block)."""
         try:
             self.page.remove_listener("framenavigated", self._on_framenavigated)
             self.page.remove_listener("response", self._on_response)

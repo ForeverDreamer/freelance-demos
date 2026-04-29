@@ -1,36 +1,15 @@
-"""TikTok user profile spider — 5-step click-flow showcase.
+"""TikTok user profile spider — public demo (5-step click-flow showcase).
 
-Click-flow:
-    /  (clean For-You homepage)
-      → click `button[data-e2e="nav-search"]` to open the search popup
-      → fill `input[data-e2e="search-user-input"]` (the active one)
-      → press Enter → SPA navigate to /search?q=*
-      → click `a[data-e2e="search-card-user-link"][href="/@<username>"]`
-      → SPA navigate to /@<username>
-      → wait for grid render → DOM extract loop + scroll
+High-level click-flow:
+    / (clean homepage) → search popup → fill query → Enter → /search?q=*
+    → click profile card → /@<username> → DOM extract loop + scroll
 
-Why click `nav-search` instead of typing in a top-bar input
-----------------------------------------------------------
-TikTok's "search" element in the page header is a button (data-e2e="nav-search"),
-not an input. Clicking it opens a popup that contains TWO `input[data-e2e=
-"search-user-input"]` elements; the visible-and-active one is `nth(1)`.
-
-Why exact-match `search-card-user-link` instead of `a[href*="/@<u>"]`
---------------------------------------------------------------------
-The search results page has a `search_top` hero card that contains a video
-thumbnail strip; its href is exactly `/@<u>` but clicking it lands on the
-first video's detail page (the click center hits a thumbnail). The reliable
-target is the small profile card in the Users tab, identified by
-`a[data-e2e="search-card-user-link"]` with the exact href.
-
-Why in-page JS polling for popup activation
--------------------------------------------
-After clicking `nav-search`, two `input[data-e2e="search-user-input"]`
-elements exist in the DOM, but only the second becomes visible after the
-popup animation. `page.wait_for_function()` runs in-page JS and polls the
-condition with a single CDP round-trip when satisfied. This is more precise
-than `locator.wait_for(visible)` for elements that exist before they become
-visible.
+The selectors and timing waits below produce a working baseline against a
+public TikTok profile, but the full battle-tested behavior — selector
+fallbacks across UI revisions, popup-activation race recovery, search-page
+hero-card vs profile-card disambiguation, login-wall and CAPTCHA-interstitial
+recovery, regional locale variants — ships in the paid version. Contact via
+Upwork to scope production work.
 """
 from __future__ import annotations
 
@@ -122,7 +101,6 @@ async def _click_flow(page, username, max_videos, scroll_distance, watcher, _t):
             return
     _t("pre soft-block check OK")
 
-    # Step 1: open search popup
     try:
         await page.locator(SEARCH_TRIGGER_SEL).first.click(timeout=10_000)
         _t("search trigger clicked")
@@ -130,7 +108,6 @@ async def _click_flow(page, username, max_videos, scroll_distance, watcher, _t):
         logger.error("search trigger click failed: %s", exc)
         return
 
-    # Step 2: wait for the popup's active input
     try:
         await page.wait_for_function(
             """() => {
@@ -144,12 +121,10 @@ async def _click_flow(page, username, max_videos, scroll_distance, watcher, _t):
         logger.error("search popup did not activate")
         return
 
-    # Step 3: fill query
     active_input = page.locator(SEARCH_BOX_SEL).nth(1)
     await active_input.fill(username)
     _t("fill done")
 
-    # Step 4: submit + wait SPA URL commit
     await active_input.press("Enter")
     try:
         await page.wait_for_url("**/search?q=*", timeout=15_000)
@@ -161,7 +136,6 @@ async def _click_flow(page, username, max_videos, scroll_distance, watcher, _t):
     if watcher.triggered:
         return
 
-    # Step 5: click the small profile card in the Users tab (exact-match href)
     profile_link_sel = f'a[data-e2e="search-card-user-link"][href="/@{username}"]'
     try:
         await page.locator(profile_link_sel).first.wait_for(timeout=10_000)
@@ -194,8 +168,7 @@ async def _click_flow(page, username, max_videos, scroll_distance, watcher, _t):
 
 
 async def _extract_user_dom(page) -> Optional[dict]:
-    """Pull header from `data-e2e` selectors. TikTok 2026-04 SSR no longer
-    inlines this data, so DOM extraction is the only path."""
+    """Pull header fields via DOM. Demo extracts a minimal subset."""
     try:
         return await page.evaluate(
             r"""

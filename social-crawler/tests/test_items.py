@@ -1,7 +1,8 @@
 """Round-trip tests for the dataclass items.
 
-We don't run a live spider in unit tests (it would require a Chrome instance
-and platform login). Instead we verify that:
+Demo scope: TikTok + Twitter (X) only. We don't run a live spider in unit
+tests (it would require a Chrome instance and platform login). Instead we
+verify that:
 
 - `dataclasses.asdict()` produces JSON-serializable dicts
 - `clean()` validates required fields and normalizes timestamps
@@ -11,13 +12,10 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict
-from datetime import datetime, timezone
 
 import pytest
 
 from social_crawler.items import (
-    InstagramPostItem,
-    InstagramUserItem,
     TikTokUserItem,
     TikTokVideoItem,
     TwitterPostItem,
@@ -38,7 +36,6 @@ def test_tiktok_video_item_round_trip():
     assert d["platform"] == "tiktok"
     assert d["post_id"] == "1234567890"
     assert d["hashtags"] == ["world"]
-    # Must be JSON-serializable
     json.dumps(d)
 
 
@@ -53,14 +50,13 @@ def test_clean_post_kind_normalizes_iso_time():
     )
     cleaned = clean(item_dict, spider_name="twitter_user")
     assert cleaned["created_at"] == "2026-04-29T12:00:00+00:00"
-    assert cleaned["scraped_at"]  # filled if missing
+    assert cleaned["scraped_at"]
 
 
-def test_clean_user_kind_passes_with_username():
-    item_dict = asdict(InstagramUserItem(username="apple"))
+def test_clean_user_kind_passes_with_handle():
+    item_dict = asdict(TwitterUserItem(handle="anthropicai"))
     cleaned = clean(item_dict)
-    # Required check passes because username is set
-    assert cleaned["username"] == "apple"
+    assert cleaned["handle"] == "anthropicai"
 
 
 def test_clean_post_kind_drops_when_url_missing():
@@ -80,11 +76,11 @@ def test_detect_item_kind_post():
     assert _detect_item_kind(item) == "post"
 
 
-def test_detect_item_kind_user_via_username():
-    item = asdict(InstagramUserItem(username="apple"))
+def test_detect_item_kind_user_via_unique_id():
+    item = asdict(TikTokUserItem(unique_id="natgeo"))
     assert _detect_item_kind(item) == "user"
 
 
-def test_detect_item_kind_user_via_unique_id():
-    item = asdict(TikTokUserItem(unique_id="natgeo"))
+def test_detect_item_kind_user_via_handle():
+    item = asdict(TwitterUserItem(handle="anthropicai"))
     assert _detect_item_kind(item) == "user"

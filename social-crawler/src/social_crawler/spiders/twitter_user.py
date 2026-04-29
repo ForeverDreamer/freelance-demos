@@ -1,20 +1,14 @@
-"""Twitter (X) user timeline spider.
+"""Twitter (X) user timeline spider — public demo.
 
-Click-flow:
-    /home (clean)
-      → fill `[data-testid="SearchBox_Search_Input"]` (always visible, no popup)
-      → wait for typeahead listbox to render >= 2 buttons
-      → click typeahead button with text "Go to @<handle>"
-      → SPA navigate to /<handle>
-      → wait for `article[data-testid="tweet"]`
-      → DOM extract loop + scroll
+High-level click-flow:
+    /home (clean) → search input → typeahead → "Go to @<handle>" → /<handle>
+    → wait for tweets → DOM extract loop + scroll
 
-Note on the typeahead structure
--------------------------------
-The "Go to @<handle>" button is rendered inside a `<div data-testid=
-"typeaheadResult">` wrapper, NOT as a direct child of the listbox. The locator
-must use `[role="listbox"] button` (descendant) plus `has_text=`, not a child
-selector like `> button`.
+The selectors below are sufficient to reach a public X profile and pull a
+small batch of tweets, but the full anti-bot resilience (selector fallbacks
+across UI revisions, regional locale variants, login-wall edge cases,
+soft-rate-limit recovery, Twitter 'Go to' button DOM-tree depth handling)
+ships in the paid version. Contact via Upwork to scope production work.
 """
 from __future__ import annotations
 
@@ -115,7 +109,6 @@ async def _click_flow(page, handle, max_tweets, scroll_distance, watcher, _t):
         logger.error("search box fill failed: %s", exc)
         return
 
-    # Typeahead is async; wait for at least 2 buttons in the listbox.
     try:
         await page.wait_for_function(
             """() => {
@@ -133,7 +126,6 @@ async def _click_flow(page, handle, max_tweets, scroll_distance, watcher, _t):
     if watcher.triggered:
         return
 
-    # The "Go to @<handle>" button uses lowercase handle in its text.
     go_to = page.locator(
         f'{TYPEAHEAD_LISTBOX_SEL} button',
         has_text=f"Go to @{handle.lower()}",
@@ -146,7 +138,6 @@ async def _click_flow(page, handle, max_tweets, scroll_distance, watcher, _t):
         logger.error("'Go to @%s' button not in typeahead", handle)
         return
 
-    # X may redirect /lower → /Cased; match case-insensitively and exclude /search.
     try:
         await page.wait_for_url(
             lambda url: f"/{handle.lower()}" in url.lower() and "/search" not in url.lower(),

@@ -3,8 +3,8 @@
 ## Why pure asyncio + Playwright (and not Scrapy)
 
 The first iteration of this crawler was built on Scrapy + scrapy-playwright.
-After 17 iterations of optimization the spider's end-to-end time stalled at
-~100 s — and the timing log showed every event landing on the 5-second
+After many iterations of optimization the spider's end-to-end time stalled
+at ~100 s — and the timing log showed every event landing on the 5-second
 boundary (e.g., 9.99 s, 14.99 s, 19.99 s). The cause:
 
 > scrapy-playwright runs Playwright in a separate thread and re-emits its
@@ -16,8 +16,7 @@ boundary (e.g., 9.99 s, 14.99 s, 19.99 s). The cause:
 > Total click-flow time stayed at ~50 s regardless.
 
 Switching to pure asyncio + Playwright eliminated this overhead. The same
-crawler now runs in 0.9–5.1 s per spider (Facebook is an exception at ~23 s
-because Facebook's Page-search lazy-load is structurally slow).
+crawler now runs in seconds-range per spider on warm profiles.
 
 ## Click-flow over `page.goto`
 
@@ -44,7 +43,11 @@ For each platform the click-flow has a fixed shape:
 homepage → search trigger → fill query → typeahead/click → SPA navigate
 ```
 
-Per-platform variations are documented in each spider's docstring.
+Demo scope ships click-flow implementations for **Twitter (X)** and
+**TikTok** user profiles. Per-platform variations (search-popup activation
+races, typeahead DOM-tree variants, profile-card vs hero-card disambiguation,
+trusted-vs-JS click preference, regional locale handling) are tuned per
+platform in the paid version. Contact via Upwork to scope a paid build.
 
 ## Anti-bot watcher
 
@@ -52,8 +55,8 @@ Per-platform variations are documented in each spider's docstring.
 events:
 
 - `framenavigated` — main-frame URL changed. If the new URL contains a
-  challenge fragment (`/checkpoint/`, `/captcha-verify`, `/i/flow/login`,
-  etc.), set `triggered=True`.
+  challenge fragment (a generic `challenge` / `captcha` / `/login` / `verify`
+  family plus a small per-platform set), set `triggered=True`.
 - `response` — main-frame main-document HTTP response. If status is
   401 / 403 / 429 / 451 / 503, set `triggered=True`.
 
@@ -61,6 +64,10 @@ The spider's scroll/extract loop checks `watcher.triggered` each iteration.
 On trigger the spider exits gracefully (no exception is raised inside the
 async event-loop callback — Playwright callbacks swallow exceptions, so the
 spider main loop reads the flag and breaks).
+
+The demo ships a minimal pattern set. The paid version expands it with
+platform-tuned challenge / suspended-account / login-wall / regional CAPTCHA
+patterns and HTTP-status edge cases.
 
 ## Data flow
 
@@ -73,7 +80,7 @@ spider main loop reads the flag and breaks).
                                    ▼
        ┌────────────────────────────────────────────┐
        │  Chrome (user-launched, --remote-debugging) │
-       │  Port:    9222 / 9223 / 9224 / 9225         │
+       │  Port:    9223 (twitter) / 9225 (tiktok)    │
        │  Profile: ~/.chrome-profiles/<platform>/    │
        │  Tab(s):  user-opened, may be logged in     │
        └─────────────────┬──────────────────────────┘
@@ -105,22 +112,14 @@ spider main loop reads the flag and breaks).
             data/<platform>/YYYY-MM-DD.jsonl
 ```
 
-## Per-platform notes
+## Demo scope
 
-| Platform | Search input | Typeahead | URL pattern |
-| ---- | ---- | ---- | ---- |
-| TikTok | Click `nav-search` to open popup; second `search-user-input` | Click profile card in Users tab | /search?q=* → /@\<u\> |
-| Twitter (X) | `SearchBox_Search_Input` always visible | Click "Go to @\<handle\>" listbox button | typeahead → /\<handle\> |
-| Facebook | `input[type="search"]` always visible | Click `/search/pages/?q=*` filter tab | /search/top → /search/pages → /\<handle\> |
-| Instagram | Click sidebar Search → panel slides out | Click typeahead `a[href="/<u>/"]` | / → /\<u\>/ |
+| Platform | Spider | CLI subcommand |
+| ---- | ---- | ---- |
+| TikTok | user profile | `tk-user --username <name>` |
+| Twitter (X) | user timeline | `tw-user --handle <name>` |
 
-Trusted-vs-JS click preference also varies:
-
-- **TikTok**: requires Playwright trusted CDP click on `nav-search` (the
-  React `onClick` gates on `event.isTrusted`).
-- **Instagram**: the opposite — Playwright trusted click on the sidebar
-  Search button does not reliably trigger; we fall back to JS-dispatched
-  `element.click()` via `page.evaluate`.
-- **Twitter, Facebook**: either works.
-
-For details see the docstring at the top of each spider file.
+The paid version adds Facebook Page feed, Instagram profile, TikTok hashtag
+page, and TikTok video detail metadata, plus production-grade pipelines
+(see [README.md](../README.md) "What this demo does NOT do" table for the
+full diff).

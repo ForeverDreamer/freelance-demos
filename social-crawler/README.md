@@ -1,19 +1,21 @@
 # social-crawler
 
-Multi-platform social media scraper (Facebook / Twitter (X) / Instagram / TikTok)
-built on **pure asyncio + Playwright with Chrome DevTools Protocol attach**.
-Each platform runs its own Chrome profile and CDP port, isolating cookies and
-surviving basic bot detection without headless browsers or rotating datacenter
-proxies.
+Multi-platform social media scraper built on **pure asyncio + Playwright with
+Chrome DevTools Protocol attach**. Each platform runs its own Chrome profile
+and CDP port, isolating cookies and surviving basic bot detection without
+headless browsers or rotating datacenter proxies.
 
-This subdirectory is the **public capability demo**. The full production build
-(Redis dedup with TTL, MongoDB persistence, multi-store pipelines, residential
-proxy integration, structured logging, retry/backoff middleware) lives in a
-private repo and is delivered through paid engagement.
+This subdirectory is the **public capability demo**. It ships **2 spiders**
+(Twitter user timeline + TikTok user profile) so you can verify the
+architecture end-to-end in a few minutes. The full production build ships
+**6 spiders × 4 platforms** (Facebook Page feed, Instagram profile, TikTok
+hashtag page, TikTok video detail metadata) plus Redis dedup, MongoDB
+warehouse, residential-proxy integration, humanized typing/clicking, retry
+middleware, and structured observability — delivered through paid engagement.
 
 Custom builds → [Upwork profile](https://www.upwork.com/freelancers/~0140562708001afd27)
 
-## Compliance notice (Important)
+## Compliance notice (important)
 
 - Demonstration code only; targets **public, login-free content**
 - No cookie / credential / session persistence code is bundled
@@ -31,9 +33,8 @@ Custom builds → [Upwork profile](https://www.upwork.com/freelancers/~014056270
 - **CDP attach reuse** to a user-launched Chrome instance (`connect_over_cdp` +
   reuse `browser.contexts[0].pages[0]`); the crawler does not spawn its own
   browser
-- 6 spiders × 4 platforms (Facebook public Page feed, Twitter (X) public user
-  timeline, Instagram public profile grid, TikTok user profile, TikTok video
-  detail metadata, TikTok hashtag page)
+- 2 spiders × 2 platforms (Twitter user timeline, TikTok user profile) — the
+  rest of the suite ships in the paid version
 - Per-platform Chrome profile + CDP port isolation (no cookie cross-contamination)
 - Anti-bot watcher — Playwright `page.on('framenavigated')` + `page.on('response')`
   listeners detect challenge URL fragments and HTTP 401/403/429 on the main
@@ -47,7 +48,7 @@ See [docs/architecture.md](docs/architecture.md) for the full diagram and
 rationale. TL;DR:
 
 ```text
-User-launched Chrome (4 profiles, 4 CDP ports, 1 logged-in tab each)
+User-launched Chrome (per-platform profile, dedicated CDP port, logged-in tab)
        │
        ▼
 asyncio spider ──► click-flow (real DOM clicks, SPA pushState)
@@ -80,13 +81,14 @@ The crawler reproduces this by:
 3. Triggering each step with `page.locator(...).click()` (CDP
    `Input.dispatchMouseEvent`, `isTrusted=true`)
 
-End-to-end timing measured on real logged-in profiles: 0.9–5.1 s per spider
-(except Facebook page feed which has slow lazy-load: ~23 s).
+End-to-end timing measured on real logged-in profiles: ~1.7 s for Twitter,
+~5 s for TikTok user profile (warm runs).
 
 ## What this demo does NOT do (and the paid version does)
 
 | Feature | Demo | Paid version |
 | ---- | ---- | ---- |
+| Spider coverage | 2 spiders × 2 platforms (twitter user, tiktok user) | 6 spiders × 4 platforms (+ Facebook Page feed, Instagram profile, TikTok hashtag, TikTok video detail) |
 | Storage backends | JSONL only | JSONL + MongoDB upsert + Redis dedup + PostgreSQL warehouse + Google Sheets |
 | Dedup | ⬜ None | ✅ Redis SET with 30-day TTL keyed by `dedup:<platform>:<post_id>` |
 | Field cleaning pipeline | Basic time normalization | Time normalization, zero-width char stripping, required-field guards, language detection |
@@ -94,6 +96,8 @@ End-to-end timing measured on real logged-in profiles: 0.9–5.1 s per spider
 | Rate-limit middleware | ⬜ None | ✅ Per-spider token bucket, configurable burst/sustain |
 | Retry on transient failures | ⬜ None | ✅ Exponential backoff with jitter |
 | Residential proxy integration | ⬜ None | ✅ Sticky-per-profile binding for Instagram / Twitter |
+| Selector fallbacks across UI revisions | ⬜ Single selector path | ✅ Multi-tier fallback chain per platform, regional locale variants |
+| Anti-bot URL pattern catalog | ⬜ Minimal subset | ✅ Platform-tuned challenge / suspended-account / login-wall / regional CAPTCHA patterns |
 | Login / session persistence | ⬜ Not bundled | ⬜ Still not bundled (by design — user logs in manually once, profile dir persists) |
 | Structured observability | ⬜ stdlib logging | ✅ JSON log lines + per-spider metrics |
 | Production CLI | `python -m social_crawler.main` | `crawlctl` umbrella tool with `chrome` / `crawl` / `info` / `infra` subcommands |
@@ -123,8 +127,8 @@ uv run python scripts/start_chrome_cdp.py --platform twitter
 
 The Chrome window opens on a blank New Tab Page. **Open a new tab manually**
 (`Ctrl+T`), type the platform homepage URL, press Enter, and let it load. If
-the platform requires login (Facebook / Instagram), log in manually once — the
-session persists in `~/.chrome-profiles/<platform>/`.
+the platform requires login, log in manually once — the session persists in
+`~/.chrome-profiles/<platform>/`.
 
 ### 3. Run a spider
 
@@ -134,24 +138,16 @@ In another terminal:
 # Twitter user timeline (~1.7 s end-to-end on a warm profile)
 uv run python -m social_crawler.main tw-user --handle anthropicai --max 10
 
-# TikTok user profile (~5 s, 5-step click-flow showcase)
+# TikTok user profile (~5 s, 5-step click-flow)
 uv run python -m social_crawler.main tk-user --username natgeo --max 5
-
-# Instagram profile (~1 s, fastest in the suite)
-uv run python -m social_crawler.main ig-profile --username apple --max 5
-
-# Facebook Page feed (~23 s, slow lazy-load but works on any public Page)
-uv run python -m social_crawler.main fb-feed --page-handle nasaearth --max 5
-
-# TikTok video detail metadata (walks through user feed via arrow-right)
-uv run python -m social_crawler.main tk-video --username natgeo --max 5
-
-# TikTok hashtag page (discovery layer; per-item likes/comments deferred to tk-video)
-uv run python -m social_crawler.main tk-hashtag --hashtag earthmonth --max 5
 ```
 
 Output is written to `data/<platform>/YYYY-MM-DD.jsonl` (one JSON record per
 line, daily sharded).
+
+For the rest of the spider catalog (Facebook Page feed, Instagram profile,
+TikTok hashtag, TikTok video detail) and the production-grade features in
+the table above, contact via the [Upwork profile](https://www.upwork.com/freelancers/~0140562708001afd27).
 
 ### 4. Check the output
 
@@ -167,16 +163,15 @@ records look like.
 
 ## Default ports
 
-Four CDP ports (one per platform, independent `user-data-dir`):
+Two CDP ports (one per demo platform, independent `user-data-dir`). The paid
+version registers `fb=9222` and `instagram=9224` in addition.
 
 | Platform | Default port | Chrome profile dir | CLI subcommand |
 | ---- | ---- | ---- | ---- |
-| `fb` | 9222 | `~/.chrome-profiles/fb` | `fb-feed` |
 | `twitter` | 9223 | `~/.chrome-profiles/twitter` | `tw-user` |
-| `instagram` | 9224 | `~/.chrome-profiles/instagram` | `ig-profile` |
-| `tiktok` | 9225 | `~/.chrome-profiles/tiktok` | `tk-user`, `tk-video`, `tk-hashtag` |
+| `tiktok` | 9225 | `~/.chrome-profiles/tiktok` | `tk-user` |
 
-Override via env vars (`FB_CDP_PORT`, `TWITTER_CDP_PORT`, etc.) or `--port`
+Override via env vars (`TWITTER_CDP_PORT`, `TIKTOK_CDP_PORT`) or `--port`
 flag on `start_chrome_cdp.py`.
 
 ## Project layout
@@ -196,7 +191,7 @@ social-crawler/
 │   └── start_chrome_cdp.py    # Cross-platform Chrome launcher with CDP port
 ├── src/social_crawler/
 │   ├── __init__.py
-│   ├── main.py                # click CLI entrypoint (6 subcommands)
+│   ├── main.py                # click CLI entrypoint (2 subcommands in the demo)
 │   ├── config.py              # Settings dataclass loaded from .env
 │   ├── browser.py             # connect_over_cdp + page reuse (attach mode)
 │   ├── nav.py                 # Sidebar Home reset (returns to clean homepage)
@@ -205,11 +200,7 @@ social-crawler/
 │   ├── pipelines.py           # Async JSONL pipeline (clean → write_jsonl)
 │   └── spiders/
 │       ├── tiktok_user.py     # 5-step click-flow showcase
-│       ├── twitter_user.py    # Fastest spider (1.7 s)
-│       ├── fb_feed.py         # FB Pages search → click → feed
-│       ├── instagram_profile.py
-│       ├── tiktok_video.py    # Detail-page metadata via arrow-right pagination
-│       └── tiktok_hashtag.py  # /tag/<name> grid
+│       └── twitter_user.py    # Fastest spider (~1.7 s)
 └── tests/
     └── test_items.py          # Item dataclass round-trip
 ```
@@ -219,17 +210,17 @@ social-crawler/
 **Q: Why not just `requests` + signed-out HTML scraping?**
 
 Most platforms ship 80% of the timeline content behind JavaScript-rendered
-SPA components. Even logged-out HTML on TikTok / Instagram shows only a header
-and "follow to see more". You need a real browser.
+SPA components. Even logged-out HTML on TikTok shows only a header and
+"follow to see more". You need a real browser.
 
 **Q: Why not Scrapy + scrapy-playwright?**
 
 Scrapy's Twisted reactor runs on a 5-second tick on the event loop's
-cross-thread emit path. In the v1 build of this crawler, single-step
+cross-thread emit path. In an earlier build of this crawler, single-step
 optimizations (e.g., reducing a popup-wait from 10 s to 5 s) were absorbed
 by the reactor tick boundary — the spider's total click-flow time stayed at
 ~50 s regardless. Switching to pure asyncio eliminated this overhead and
-brought the same crawler down to 0.9–5 s per run.
+brought the same crawler down to seconds-range per run.
 
 **Q: Why CDP attach instead of Playwright launching its own browser?**
 
@@ -246,6 +237,12 @@ logged-in user can see, the crawler can extract — but the crawler never
 performs the login itself. For client engagements that need account-bound
 content, the user grants their own session; for fully anonymous public data,
 no login is needed at all.
+
+**Q: How do I get the rest of the spiders / the production features?**
+
+Contact via the [Upwork profile](https://www.upwork.com/freelancers/~0140562708001afd27)
+to scope a paid engagement. The production build is delivered as a private
+repo or a containerized deployment, depending on what fits your team.
 
 ## License
 

@@ -30,9 +30,9 @@ logger = logging.getLogger(__name__)
 
 
 # Item kind detection. post-kind requires post_id; user-kind requires one
-# of the user identifier fields (varies by platform).
+# of the user identifier fields (TikTok / Twitter scope in the demo).
 USER_IDENTIFIER_FIELDS = (
-    "user_id", "sec_uid", "unique_id", "handle", "username", "page_handle",
+    "user_id", "sec_uid", "unique_id", "handle",
 )
 TIME_FIELDS = ("created_at", "scraped_at")
 

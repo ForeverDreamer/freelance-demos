@@ -1,8 +1,9 @@
 """Dataclass items, one schema per platform.
 
-The demo writes these directly to JSONL via `dataclasses.asdict()`. The paid
-version reuses the same schemas for MongoDB upsert (keyed by `post_id`) and
-PostgreSQL warehouse rows.
+Public demo scope: TikTok + Twitter (X). The paid version adds Facebook and
+Instagram schemas plus MongoDB / PostgreSQL persistence.
+
+The demo writes these directly to JSONL via `dataclasses.asdict()`.
 """
 from __future__ import annotations
 
@@ -126,75 +127,4 @@ class TwitterUserItem:
     followers_count: Optional[int] = None
     following_count: Optional[int] = None
     profile_image_url: str = ""
-    scraped_at: str = ""
-
-
-@dataclass
-class FacebookPostItem(SocialPostItem):
-    """Facebook Page post. post_id is the FB numeric id or pfbid string."""
-
-    platform: str = "fb"
-
-    reactions_total: Optional[int] = None
-    reactions_breakdown: dict = field(default_factory=dict)
-    shares_count: Optional[int] = None
-    page_id: str = ""
-    post_type: str = ""  # "post" | "reel" | "video" | "photo"
-
-    media_alts: list[str] = field(default_factory=list)
-
-
-@dataclass
-class FacebookPageItem:
-    """Facebook Page profile header. JSONL-only by design."""
-
-    platform: str = "fb"
-    page_handle: str = ""
-    page_id: str = ""
-    page_name: str = ""
-    page_url: str = ""
-    bio: str = ""
-    category: str = ""
-    verified: bool = False
-    follower_count: Optional[int] = None
-    avatar_url: str = ""
-    scraped_at: str = ""
-
-
-@dataclass
-class InstagramPostItem(SocialPostItem):
-    """Instagram post / reel / IGTV. post_id is the IG shortcode (base64-like)."""
-
-    platform: str = "instagram"
-
-    saves_count: Optional[int] = None
-    plays_count: Optional[int] = None  # reel views
-
-    hashtags: list[str] = field(default_factory=list)
-    mentions: list[str] = field(default_factory=list)
-    cover_url: str = ""
-    post_type: str = ""  # "p" | "reel" | "tv"
-
-    # True if alt text is IG-vision auto-generated ("Photo by X. May be an
-    # image of...") rather than a user-written caption. Reels generally have
-    # real captions; posts vary by account.
-    is_alt_text_auto: Optional[bool] = None
-
-
-@dataclass
-class InstagramUserItem:
-    """Instagram user profile header. JSONL-only by design."""
-
-    platform: str = "instagram"
-    username: str = ""
-    user_id: str = ""
-    display_name: str = ""
-    bio: str = ""
-    bio_link: str = ""
-    avatar_url: str = ""
-    is_verified: bool = False
-    is_private: bool = False
-    posts_count: Optional[int] = None
-    followers_count: Optional[int] = None
-    following_count: Optional[int] = None
     scraped_at: str = ""
