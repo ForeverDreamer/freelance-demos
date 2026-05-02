@@ -29,14 +29,14 @@ On a 10-firm pilot against well-known PE buyers, **7/8 fetched firms reach High 
 
 1. Open <https://github.com/ForeverDreamer/freelance-demos> in your browser
 2. Click the green **Code** button → **Download ZIP**
-3. Extract the ZIP, then navigate into `freelance-demos-main/mna-extractor-demo/`
+3. Extract the ZIP, then navigate into `freelance-demos-main/mna-extractor/`
 4. Right-click inside that folder → **Open in Terminal** (Windows 11 / macOS Finder / most Linux file managers support this natively)
 
 **Option B (developer):**
 
 ```bash
 git clone https://github.com/ForeverDreamer/freelance-demos
-cd freelance-demos/mna-extractor-demo
+cd freelance-demos/mna-extractor
 ```
 
 ### Run

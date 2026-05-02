@@ -1,4 +1,4 @@
-# doc-extractor-preview
+# doc-extractor
 
 A public architecture sketch of a local-first document AI pipeline:
 PDF / image / DOCX → structured JSON, no cloud calls required, with a

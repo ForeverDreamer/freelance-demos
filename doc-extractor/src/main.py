@@ -14,7 +14,7 @@ from .extractor import extract  # TODO: see private repo for retry + Outlines fa
 from .parser import parse_to_text
 from .schema import Invoice
 
-app = FastAPI(title="doc-extractor-preview", version="0.1.0-sketch")
+app = FastAPI(title="doc-extractor", version="0.1.0-sketch")
 
 
 @app.get("/health")
